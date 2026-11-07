@@ -1,14 +1,31 @@
 name: Daily pipeline
 
 on:
+  schedule:
+    - cron: "37 18 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+env:
+  WAREHOUSE_TAG: warehouse
+  WAREHOUSE_FILE: complaints.duckdb.gz
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   pipeline:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
+      - name: Record the start time
+        run: echo "STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%S)" >> "$GITHUB_ENV"
+
       - name: Check out the repository
         uses: actions/checkout@v5
 
@@ -23,3 +40,69 @@ jobs:
 
       - name: Check CFPB is reachable
         run: python src/ingestion/check_source.py
+
+      - name: Download the saved warehouse
+        id: download
+        run: |
+          mkdir -p data/warehouse
+          if gh release download "$WAREHOUSE_TAG" --pattern "$WAREHOUSE_FILE" --dir data/warehouse; then
+            gunzip "data/warehouse/$WAREHOUSE_FILE"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No saved warehouse found, so this run rebuilds it from the bulk file."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Rebuild from the bulk file (only when nothing was saved)
+        if: steps.download.outputs.found == 'false'
+        run: |
+          mkdir -p data/raw
+          curl -L --fail -o data/raw/complaints.csv.zip https://files.consumerfinance.gov/ccdb/complaints.csv.zip
+          python src/ingestion/load_bulk.py
+
+      - name: Load recent complaints from the API
+        run: python src/ingestion/load_api.py
+
+      - name: Reconcile with the API
+        id: reconcile
+        continue-on-error: true
+        run: python src/ingestion/reconcile.py
+
+      - name: Build and test the star schema
+        working-directory: dbt
+        run: |
+          dbt build
+          dbt source freshness
+
+      - name: Save the warehouse
+        run: |
+          gzip -1 -c data/warehouse/complaints.duckdb > "$WAREHOUSE_FILE"
+          ls -lh "$WAREHOUSE_FILE"
+          if ! gh release view "$WAREHOUSE_TAG" > /dev/null 2>&1; then
+            gh release create "$WAREHOUSE_TAG" --latest=false \
+              --title "Warehouse (updated daily)" \
+              --notes "The DuckDB warehouse, saved by the daily pipeline. Download complaints.duckdb.gz and unzip it with gunzip."
+          fi
+          gh release upload "$WAREHOUSE_TAG" "$WAREHOUSE_FILE" --clobber
+
+      - name: Write the run summary
+        if: always()
+        run: python src/ingestion/run_summary.py --since "$STARTED_AT" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-logs
+          path: |
+            logs/
+            dbt/logs/
+            dbt/target/run_results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Fail the run if reconciliation failed
+        if: steps.reconcile.outcome == 'failure'
+        run: |
+          echo "Reconciliation found differences with the CFPB API. The data was still saved. See the run summary."
+          exit 1

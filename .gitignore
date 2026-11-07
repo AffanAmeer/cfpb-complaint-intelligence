@@ -12,3 +12,5 @@ logs/
 .env
 .DS_Store
 profile_output.txt
+
+scratch/

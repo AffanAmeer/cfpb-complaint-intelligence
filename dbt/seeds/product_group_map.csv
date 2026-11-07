@@ -1,0 +1,33 @@
+product,sub_product,product_group,product_group_short
+Mortgage,,Mortgage,Mortgage
+Debt collection,,Debt collection,Debt collection
+Student loan,,Student loan,Student loan
+Credit reporting,,Credit reporting or other personal consumer reports,Credit reporting
+"Credit reporting, credit repair services, or other personal consumer reports",,Credit reporting or other personal consumer reports,Credit reporting
+"Credit reporting, credit repair services, or other personal consumer reports",Credit repair services,Debt or credit management,Debt or credit mgmt
+Credit reporting or other personal consumer reports,,Credit reporting or other personal consumer reports,Credit reporting
+Credit card,,Credit card,Credit card
+Credit card or prepaid card,,Credit card,Credit card
+Credit card or prepaid card,General-purpose prepaid card,Prepaid card,Prepaid card
+Credit card or prepaid card,Government benefit card,Prepaid card,Prepaid card
+Credit card or prepaid card,Gift card,Prepaid card,Prepaid card
+Credit card or prepaid card,Payroll card,Prepaid card,Prepaid card
+Credit card or prepaid card,Student prepaid card,Prepaid card,Prepaid card
+Prepaid card,,Prepaid card,Prepaid card
+Bank account or service,,Checking or savings account,Checking/savings
+Checking or savings account,,Checking or savings account,Checking/savings
+Money transfers,,"Money transfer, virtual currency, or money service",Money transfer
+Virtual currency,,"Money transfer, virtual currency, or money service",Money transfer
+"Money transfer, virtual currency, or money service",,"Money transfer, virtual currency, or money service",Money transfer
+"Money transfer, virtual currency, or money service",Debt settlement,Debt or credit management,Debt or credit mgmt
+Other financial service,,"Money transfer, virtual currency, or money service",Money transfer
+Other financial service,Debt settlement,Debt or credit management,Debt or credit mgmt
+Other financial service,Credit repair,Debt or credit management,Debt or credit mgmt
+Consumer Loan,,"Payday loan, title loan, personal loan, or advance loan",Payday/personal loan
+Consumer Loan,Vehicle loan,Vehicle loan or lease,Vehicle loan/lease
+Consumer Loan,Vehicle lease,Vehicle loan or lease,Vehicle loan/lease
+Payday loan,,"Payday loan, title loan, personal loan, or advance loan",Payday/personal loan
+"Payday loan, title loan, or personal loan",,"Payday loan, title loan, personal loan, or advance loan",Payday/personal loan
+"Payday loan, title loan, personal loan, or advance loan",,"Payday loan, title loan, personal loan, or advance loan",Payday/personal loan
+Vehicle loan or lease,,Vehicle loan or lease,Vehicle loan/lease
+Debt or credit management,,Debt or credit management,Debt or credit mgmt

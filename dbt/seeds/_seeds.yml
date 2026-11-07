@@ -1,0 +1,24 @@
+version: 2
+
+seeds:
+  - name: product_group_map
+    description: >
+      Maps every product name CFPB has used (2011-2017, 2017-2023, 2023-now) to its
+      current product list. An empty sub_product is the default for that product;
+      a filled one overrides it where CFPB split a product into two.
+    data_tests:
+      - unique:
+          arguments:
+            column_name: "product || '|' || coalesce(sub_product, '')"
+    columns:
+      - name: product
+        data_tests: [not_null]
+      - name: product_group
+        data_tests: [not_null]
+  - name: credit_bureaus
+    description: The three national credit bureaus. They receive most complaints, so analysis often shows them separately.
+  - name: us_state_codes
+    description: USPS codes for states, DC, territories, freely associated states and military mail.
+    columns:
+      - name: state_code
+        data_tests: [unique, not_null]

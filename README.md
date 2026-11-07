@@ -4,7 +4,7 @@ A data analytics project that uses the CFPB's public Consumer Complaint Database
 
 The goal is to build an end-to-end pipeline that takes raw complaint data and turns it into useful insights through data engineering, SQL analysis, statistical methods, and NLP.
 
-**Status:** In progress. The full complaint history (18,965,764 complaints, Dec 2011 to Nov 2026) is loaded into DuckDB and reconciles exactly with the CFPB API.
+**Status:** In progress. The full complaint history (18,965,764 complaints, Dec 2011 to Nov 2026) is loaded into DuckDB, reconciles exactly with the CFPB API, and is modelled into a tested star schema with dbt.
 
 ## Architecture
 
@@ -44,6 +44,14 @@ CFPB API → Python data ingestion → DuckDB → dbt data models and tests → 
    python src/ingestion/reconcile.py
    ```
 
+5. Build and test the star schema:
+
+   ```bash
+   cd dbt
+   dbt build
+   dbt source freshness
+   ```
+
 ## Ingestion
 
 The full history comes from CFPB's bulk CSV, and the API keeps it up to date. Loading 19 million complaints through the API would take about 190,000 requests at 100 rows each.
@@ -54,6 +62,23 @@ The full history comes from CFPB's bulk CSV, and the API keeps it up to date. Lo
 - Every run is recorded in `raw.load_log` (rows inserted, updated, changed, skipped).
 - `reconcile.py` compares the warehouse with the API: duplicate IDs, the total, every month, and the last 14 days. It exits with an error if anything differs. First run (2026-11-07): all 5 checks passed, and all 180 months match.
 - Dates are UTC. The API's date filter uses UTC days, and the daily check confirmed the bulk file does too.
+
+## Data Model
+
+dbt (`dbt/`) turns `raw.complaints` into a star schema in the same DuckDB file, in three layers:
+
+- **Staging** (`staging.stg_complaints`, a view): one row per complaint, with trimmed text, labelled blanks, standard state codes and the join keys.
+- **Marts** (tables): `fact_complaints` (one row per complaint, 18,965,764 rows) with `dim_product` (127), `dim_issue` (442), `dim_company` (8,198), `dim_state` (63) and `dim_date` (one row per day, 2011 to 2026).
+- **Reference** (seeds): small hand-checked CSVs that dbt loads as tables.
+
+Decisions worth knowing:
+
+- **Products were renamed twice.** CFPB used 21 product names across three naming schemes (2011-2017, 2017-2023, 2023 onward), and split some products (for example "Credit card or prepaid card" became two). `seeds/product_group_map.csv` maps every old name, using the sub-product where a product was split, onto CFPB's current 11 products. This gives `product_group`, which can be compared across years.
+- **Company names** are merged when they differ only by capitals, spaces or punctuation (8,210 spellings become 8,198 companies, for example "ONEMAIN FINANCE CORPORATION" and "OneMain Finance Corporation"). Different legal entities of one group are not merged.
+- **Credit bureaus** are flagged (`dim_company.is_credit_bureau`). Equifax, TransUnion and Experian account for 78.9% of all complaints, so most analysis should show them separately.
+- **Keys** are md5 hashes of the natural values, so they are stable between runs and portable to Databricks. Date keys are integers like `20261107`.
+
+Tests (57, all passing): unique and not-null keys, every fact key exists in its dimension, accepted values for categories, the fact table has exactly one row per raw complaint, every raw product is mapped, plus two unit tests for the product mapping and company merging logic. `dbt source freshness` warns if no load has happened in 2 days. A full build of 19M rows takes about 7 seconds on a MacBook Air.
 
 ## Key Findings
 
@@ -70,7 +95,7 @@ Added once results exist. Every number here will be reproducible from this repo.
 - [x] 0. Setup
 - [x] 1. Explore the data and API
 - [x] 2. Ingestion + incremental loads
-- [ ] 3. dbt star schema + tests
+- [x] 3. dbt star schema + tests
 - [ ] 4. GitHub Actions scheduling
 - [ ] 5. SQL analysis + KPIs
 - [ ] 6. Statistics: spike detection

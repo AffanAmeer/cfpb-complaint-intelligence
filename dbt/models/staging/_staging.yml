@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: stg_complaints
+    description: Cleaned complaints, one row per complaint_id. Same grain as raw.complaints.
+    columns:
+      - name: complaint_id
+        data_tests:
+          - unique
+          - not_null
+      - name: product
+        data_tests:
+          - not_null
+      - name: company_match_key
+        description: Lowercase company name with everything except letters and digits removed, so "Seterus, Inc." and "SETERUS INC" match.
+        data_tests:
+          - not_null
+      - name: company_response
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Closed with explanation
+                  - Closed with non-monetary relief
+                  - Closed with monetary relief
+                  - In progress
+                  - Untimely response
+                  - Closed without relief
+                  - Closed with relief
+                  - Closed
+      - name: submitted_via
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [Web, Referral, Phone, Postal mail, Fax, Email]
+      - name: is_timely_response
+        data_tests:
+          - not_null

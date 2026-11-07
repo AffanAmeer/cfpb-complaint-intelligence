@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: cfpb
+    description: Raw complaints loaded by src/ingestion (bulk backfill + daily API upserts).
+    schema: raw
+    tables:
+      - name: complaints
+        description: One row per CFPB complaint, values as the source sent them.
+        config:
+          loaded_at_field: last_loaded_at_utc
+          freshness:
+            warn_after: {count: 2, period: day}
+            error_after: {count: 7, period: day}
+        columns:
+          - name: complaint_id
+            data_tests:
+              - unique
+              - not_null
+          - name: date_received
+            data_tests:
+              - not_null

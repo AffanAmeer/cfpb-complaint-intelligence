@@ -1,0 +1,27 @@
+name: cfpb_complaints
+version: "1.0.0"
+profile: cfpb_complaints
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  cfpb_complaints:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+
+seeds:
+  cfpb_complaints:
+    +schema: reference
+    product_group_map:
+      +column_types:
+        product: varchar
+        sub_product: varchar

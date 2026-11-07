@@ -1,0 +1,143 @@
+version: 2
+
+models:
+  - name: fact_complaints
+    description: One row per complaint, with keys to every dimension.
+    columns:
+      - name: complaint_id
+        data_tests: [unique, not_null]
+      - name: date_received_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: date_sent_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: product_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_key
+      - name: issue_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_issue')
+                field: issue_key
+      - name: company_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_key
+      - name: state_code
+        description: Empty for about 64k complaints where the consumer gave no state.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_state')
+                field: state_code
+      - name: days_to_company
+        description: Days from CFPB receiving the complaint to sending it to the company.
+      - name: is_sent_before_received
+        description: True for about 7,000 complaints from 2011-2014, when CFPB stored the sent date as midnight Eastern time. Exclude these from timing analysis.
+
+  - name: dim_product
+    description: One row per CFPB product + sub-product, mapped to a stable product group.
+    columns:
+      - name: product_key
+        data_tests: [unique, not_null]
+      - name: product_group
+        description: CFPB's current (2023) product name that this product belongs to.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Credit reporting or other personal consumer reports
+                  - Debt collection
+                  - Mortgage
+                  - Credit card
+                  - Prepaid card
+                  - Checking or savings account
+                  - Money transfer, virtual currency, or money service
+                  - Student loan
+                  - Vehicle loan or lease
+                  - Payday loan, title loan, personal loan, or advance loan
+                  - Debt or credit management
+
+  - name: dim_issue
+    columns:
+      - name: issue_key
+        data_tests: [unique, not_null]
+
+  - name: dim_company
+    columns:
+      - name: company_key
+        data_tests: [unique, not_null]
+      - name: company_name
+        data_tests: [not_null]
+
+  - name: dim_state
+    columns:
+      - name: state_code
+        data_tests: [unique, not_null]
+
+  - name: dim_date
+    columns:
+      - name: date_key
+        data_tests: [unique, not_null]
+      - name: date_day
+        data_tests: [unique, not_null]
+
+unit_tests:
+  - name: product_group_uses_exact_match_before_default
+    description: A split product goes to the right group by sub-product, and anything else falls back to the default.
+    model: dim_product
+    given:
+      - input: ref('stg_complaints')
+        rows:
+          - {product_key: k1, product: Credit card or prepaid card, sub_product: Gift card, date_received: 2019-05-01}
+          - {product_key: k2, product: Credit card or prepaid card, sub_product: Store credit card, date_received: 2019-05-01}
+          - {product_key: k3, product: Consumer Loan, sub_product: Vehicle loan, date_received: 2015-01-01}
+          - {product_key: k4, product: Consumer Loan, sub_product: Pawn loan, date_received: 2015-01-01}
+      - input: ref('product_group_map')
+        rows:
+          - {product: Credit card or prepaid card, sub_product: null, product_group: Credit card, product_group_short: Credit card}
+          - {product: Credit card or prepaid card, sub_product: Gift card, product_group: Prepaid card, product_group_short: Prepaid card}
+          - {product: Consumer Loan, sub_product: null, product_group: Payday loan, product_group_short: Payday}
+          - {product: Consumer Loan, sub_product: Vehicle loan, product_group: Vehicle loan or lease, product_group_short: Vehicle}
+    expect:
+      rows:
+        - {product_key: k1, product_group: Prepaid card}
+        - {product_key: k2, product_group: Credit card}
+        - {product_key: k3, product_group: Vehicle loan or lease}
+        - {product_key: k4, product_group: Payday loan}
+
+  - name: company_spellings_merge_to_most_common
+    description: Spellings that differ only by case or punctuation become one company, shown with the most-used spelling.
+    model: dim_company
+    given:
+      - input: ref('stg_complaints')
+        rows:
+          - {company_key: a, company_match_key: seterusinc, company_name: "SETERUS INC", date_received: 2015-01-01}
+          - {company_key: a, company_match_key: seterusinc, company_name: "SETERUS INC", date_received: 2015-02-01}
+          - {company_key: a, company_match_key: seterusinc, company_name: "Seterus, Inc.", date_received: 2016-01-01}
+          - {company_key: b, company_match_key: equifaxinc, company_name: "EQUIFAX, INC.", date_received: 2020-01-01}
+      - input: ref('credit_bureaus')
+        rows:
+          - {company_name: "EQUIFAX, INC."}
+    expect:
+      rows:
+        - {company_key: a, company_name: "SETERUS INC", name_variants: 2, is_credit_bureau: false, first_seen: 2015-01-01, last_seen: 2016-01-01}
+        - {company_key: b, company_name: "EQUIFAX, INC.", name_variants: 1, is_credit_bureau: true, first_seen: 2020-01-01, last_seen: 2020-01-01}

@@ -1,10 +1,12 @@
 # Banking Complaint Intelligence System
 
+[![Daily pipeline](https://github.com/AffanAmeer/cfpb-complaint-intelligence/actions/workflows/daily_pipeline.yml/badge.svg)](https://github.com/AffanAmeer/cfpb-complaint-intelligence/actions/workflows/daily_pipeline.yml)
+
 A data analytics project that uses the CFPB's public Consumer Complaint Database to explore trends in banking complaints, identify unusual spikes, and uncover common customer issues.
 
 The goal is to build an end-to-end pipeline that takes raw complaint data and turns it into useful insights through data engineering, SQL analysis, statistical methods, and NLP.
 
-**Status:** In progress. The full complaint history (18,965,764 complaints, Dec 2011 to Nov 2026) is loaded into DuckDB, reconciles exactly with the CFPB API, and is modelled into a tested star schema with dbt.
+**Status:** In progress. The full complaint history (18,965,764 complaints, Dec 2011 to Nov 2026) is loaded into DuckDB, reconciles exactly with the CFPB API, and is modelled into a tested star schema with dbt. GitHub Actions refreshes it every day.
 
 ## Architecture
 
@@ -80,6 +82,28 @@ Decisions worth knowing:
 
 Tests (57, all passing): unique and not-null keys, every fact key exists in its dimension, accepted values for categories, the fact table has exactly one row per raw complaint, every raw product is mapped, plus two unit tests for the product mapping and company merging logic. `dbt source freshness` warns if no load has happened in 2 days. A full build of 19M rows takes about 7 seconds on a MacBook Air.
 
+## Automation
+
+`.github/workflows/daily_pipeline.yml` runs the whole pipeline on GitHub Actions every day at 18:37 UTC, after CFPB's daily update. It can also be started by hand from the Actions tab.
+
+1. Check that the CFPB API and bulk file are reachable (`check_source.py`), so a block fails in seconds, not after a long run.
+2. Download the saved warehouse. If none exists, rebuild it from the bulk file with `load_bulk.py`.
+3. Load the last 7 days from the API (`load_api.py`).
+4. Reconcile with the API (`reconcile.py`).
+5. Build and test the star schema (`dbt build`, `dbt source freshness`).
+6. Save the warehouse.
+7. Write a run summary (`run_summary.py`) and keep the logs for 30 days.
+
+Decisions worth knowing:
+
+- **Where the data lives between runs.** Every run gets a fresh machine, so the DuckDB file (830 MB) would be lost. The pipeline gzips it and stores it as a file on the [`warehouse` release](https://github.com/AffanAmeer/cfpb-complaint-intelligence/releases/tag/warehouse), replacing it each day. Anyone can download the latest warehouse from there and open it with DuckDB.
+- **Self-healing.** If the saved file is missing, the run rebuilds the full history from the bulk file in under a minute, then carries on as normal.
+- **A failed reconciliation still saves the data.** A mismatch usually means CFPB changed past days, not that the load was wrong. So the run saves the warehouse first and then marks itself as failed, which sends an email. If `dbt build` fails, nothing is saved, and the next run's 7-day lookback re-pulls the same days.
+- **One run at a time.** A concurrency group makes a second run wait, so two runs can never overwrite each other's file.
+- **No secrets to manage.** The run uses the temporary token GitHub creates for each run, with permission only to write releases.
+
+First run (2026-11-07, rebuilding from the bulk file): 23m 48s in total. The API load took 16m 20s, reconciliation 4m 22s, the bulk rebuild 55s and `dbt build` 52s. All 5 reconciliation checks passed, and all 18,965,764 complaints reached `fact_complaints`.
+
 ## Key Findings
 
 Added once results exist. Every number here will be reproducible from this repo.
@@ -96,7 +120,7 @@ Added once results exist. Every number here will be reproducible from this repo.
 - [x] 1. Explore the data and API
 - [x] 2. Ingestion + incremental loads
 - [x] 3. dbt star schema + tests
-- [ ] 4. GitHub Actions scheduling
+- [x] 4. GitHub Actions scheduling
 - [ ] 5. SQL analysis + KPIs
 - [ ] 6. Statistics: spike detection
 - [ ] 7. Text classifier

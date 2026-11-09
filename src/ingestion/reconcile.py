@@ -18,10 +18,21 @@ days, so if the bulk file's dates were US Eastern days instead, the daily
 counts would not match.
 
 Why the API counts might not match (even if the loader is right)
-    - CFPB removed a complaint after we loaded it (we keep the old row).
-    - CFPB added complaints for a past day after our last load.
-    Either way, a difference is worth looking at, so the check reports FAIL
-    and the script exits with code 1. That will let GitHub Actions flag it in Phase 4.
+    CFPB keeps publishing complaints for past days for weeks, and sometimes
+    removes complaints. The loaders handle both (load_bulk.py merges a fresh
+    full copy every day, load_api.py reloads the last 7 days), but the bulk
+    file is made once a day, so by the time this script asks the API, a few
+    late complaints have usually appeared that no file had yet.
+
+    So each check has three results:
+    PASS  exact match.
+    WARN  a small gap, only where late publishing is expected: days outside
+          the API's 7-day reload, in the last LATE_WINDOW_DAYS days, within
+          the tolerances below. The run carries on.
+    FAIL  anything else. The script exits with code 1, and GitHub Actions
+          marks the run as failed.
+    Days the API load just reloaded, and months older than LATE_WINDOW_DAYS,
+    must always match exactly.
 
 How to run it (from the project folder, with the venv active)
     python src/ingestion/reconcile.py
@@ -33,11 +44,15 @@ import sys
 import time
 from datetime import date, timedelta
 
-from load_api import get_with_retries
+from load_api import LOOKBACK_DAYS, get_with_retries
 from warehouse import connect, setup_logging, utc_now
 
 FIRST_DAY = date(2011, 12, 1)
 DAILY_CHECK_DAYS = 14
+LATE_WINDOW_DAYS = 120
+TOTAL_TOLERANCE = 0.0005
+MONTH_TOLERANCE = 0.01
+DAY_TOLERANCE = 0.02
 
 
 def api_count(log, start, end):
@@ -59,6 +74,20 @@ def month_ranges(first, last):
         nxt = date(current.year + (current.month == 12), current.month % 12 + 1, 1)
         yield current, min(nxt - timedelta(days=1), last)
         current = nxt
+
+
+def worst(statuses):
+    """The overall result of a check made of many parts: any FAIL wins, then any WARN."""
+    return "FAIL" if "FAIL" in statuses else "WARN" if "WARN" in statuses else "PASS"
+
+
+def judge(gap, source_value, tolerance, late_allowed):
+    """PASS for an exact match, WARN for a small gap where late publishing is expected, else FAIL."""
+    if gap == 0:
+        return "PASS"
+    if late_allowed and abs(gap) <= tolerance * source_value:
+        return "WARN"
+    return "FAIL"
 
 
 def main():
@@ -89,7 +118,11 @@ def main():
     record("dates_in_range", "PASS" if in_range else "FAIL", rows, None, f"{oldest} to {newest}")
 
     api_total = api_count(log, FIRST_DAY, newest)
-    record("total_vs_api", "PASS" if rows == api_total else "FAIL", rows, api_total, f"up to {newest}")
+    record("total_vs_api", judge(rows - api_total, api_total, TOTAL_TOLERANCE, True),
+           rows, api_total, f"up to {newest}")
+
+    reloaded_from = newest - timedelta(days=LOOKBACK_DAYS)
+    late_from = newest - timedelta(days=LATE_WINDOW_DAYS)
 
     wh_by_day = dict(con.execute(
         "SELECT date_received, count(*) FROM raw.complaints GROUP BY 1"
@@ -97,18 +130,22 @@ def main():
 
     if not args.skip_monthly:
         bad_months = []
+        statuses = set()
         wh_months, api_months = 0, 0
         for start, end in month_ranges(FIRST_DAY, newest):
             wh = sum(n for d, n in wh_by_day.items() if start <= d <= end)
             api = api_count(log, start, end)
             wh_months += wh
             api_months += api
-            if wh != api:
-                bad_months.append(f"{start:%Y-%m}: {wh - api:+,}")
+            status = judge(wh - api, api, MONTH_TOLERANCE, end >= late_from)
+            statuses.add(status)
+            if status != "PASS":
+                bad_months.append(f"{start:%Y-%m}: {wh - api:+,}{'' if status == 'WARN' else ' (FAIL)'}")
         details = "all months match" if not bad_months else "; ".join(bad_months[:12])
-        record("monthly_vs_api", "PASS" if not bad_months else "FAIL", wh_months, api_months, details)
+        record("monthly_vs_api", worst(statuses), wh_months, api_months, details)
 
     bad_days = []
+    statuses = set()
     wh_days, api_days = 0, 0
     for i in range(DAILY_CHECK_DAYS):
         day = newest - timedelta(days=i)
@@ -116,10 +153,12 @@ def main():
         api = api_count(log, day, day)
         wh_days += wh
         api_days += api
-        if wh != api:
-            bad_days.append(f"{day}: {wh - api:+,}")
+        status = judge(wh - api, api, DAY_TOLERANCE, day < reloaded_from)
+        statuses.add(status)
+        if status != "PASS":
+            bad_days.append(f"{day}: {wh - api:+,}{'' if status == 'WARN' else ' (FAIL)'}")
     details = f"last {DAILY_CHECK_DAYS} days all match" if not bad_days else "; ".join(bad_days)
-    record("daily_vs_api", "PASS" if not bad_days else "FAIL", wh_days, api_days, details)
+    record("daily_vs_api", worst(statuses), wh_days, api_days, details)
 
     con.executemany("INSERT INTO raw.reconciliation_log VALUES (?, ?, ?, ?, ?, ?, ?)", results)
     con.close()
@@ -128,7 +167,11 @@ def main():
     if failed:
         log.warning("Reconciliation FAILED: %s", ", ".join(failed))
         sys.exit(1)
-    log.info("Reconciliation passed: all %s checks", len(results))
+    warned = [r[1] for r in results if r[2] == "WARN"]
+    if warned:
+        log.info("Reconciliation passed with small late-publishing gaps in: %s", ", ".join(warned))
+    else:
+        log.info("Reconciliation passed: all %s checks", len(results))
 
 
 if __name__ == "__main__":

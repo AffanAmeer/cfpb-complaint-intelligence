@@ -87,18 +87,21 @@ Tests (57, all passing): unique and not-null keys, every fact key exists in its 
 `.github/workflows/daily_pipeline.yml` runs the whole pipeline on GitHub Actions every day at 18:37 UTC, after CFPB's daily update. It can also be started by hand from the Actions tab.
 
 1. Check that the CFPB API and bulk file are reachable (`check_source.py`), so a block fails in seconds, not after a long run.
-2. Download the saved warehouse. If none exists, rebuild it from the bulk file with `load_bulk.py`.
-3. Load the last 7 days from the API (`load_api.py`).
-4. Reconcile with the API (`reconcile.py`).
-5. Build and test the star schema (`dbt build`, `dbt source freshness`).
-6. Save the warehouse.
-7. Write a run summary (`run_summary.py`) and keep the logs for 30 days.
+2. Download the saved warehouse (if none exists, the next step rebuilds it).
+3. Merge the latest bulk file (`load_bulk.py`). This catches complaints CFPB publishes late for past days, and removes complaints CFPB has taken out.
+4. Load the last 7 days from the API (`load_api.py`), which is fresher than the bulk file.
+5. Reconcile with the API (`reconcile.py`).
+6. Build and test the star schema (`dbt build`, `dbt source freshness`).
+7. Save the warehouse.
+8. Write a run summary (`run_summary.py`) and keep the logs for 30 days.
 
 Decisions worth knowing:
 
 - **Where the data lives between runs.** Every run gets a fresh machine, so the DuckDB file (830 MB) would be lost. The pipeline gzips it and stores it as a file on the [`warehouse` release](https://github.com/AffanAmeer/cfpb-complaint-intelligence/releases/tag/warehouse), replacing it each day. Anyone can download the latest warehouse from there and open it with DuckDB.
 - **Self-healing.** If the saved file is missing, the run rebuilds the full history from the bulk file in under a minute, then carries on as normal.
 - **A failed reconciliation still saves the data.** A mismatch usually means CFPB changed past days, not that the load was wrong. So the run saves the warehouse first and then marks itself as failed, which sends an email. If `dbt build` fails, nothing is saved, and the next run's 7-day lookback re-pulls the same days.
+- **Late complaints.** The first scheduled runs (Nov 7 and 8) failed reconciliation: the warehouse was about 8,400 complaints short, almost all in late October. CFPB keeps publishing complaints for past days for weeks, and a 7-day API lookback never goes back for them. It also removes some complaints (a few hundred in September). The fix merges the full bulk file every run (under a minute) and deletes complaints that are no longer in it. Because the bulk file is made once a day, a few late complaints can still appear before reconciliation runs, so those checks allow a small, stated gap (WARN) only on days outside the API reload and in the last 120 days. Everything else must match exactly.
+- **Changed complaints are caught.** The Nov 7 and 8 runs updated 4,335 and 3,929 complaints whose values had changed, mostly "In progress" becoming closed.
 - **One run at a time.** A concurrency group makes a second run wait, so two runs can never overwrite each other's file.
 - **No secrets to manage.** The run uses the temporary token GitHub creates for each run, with permission only to write releases.
 

@@ -14,7 +14,23 @@ What this script does
     3. Checks the file before loading: row count, duplicate complaint IDs,
        dates that would not parse.
     4. Upserts the rows into raw.complaints through warehouse.merge_complaints.
-    5. Writes a row to raw.load_log and deletes the unzipped CSV.
+    5. Removes complaints CFPB has taken out of the database (see below).
+    6. Writes a row to raw.load_log and deletes the unzipped CSV.
+
+Why it runs every day, not just once
+    CFPB keeps adding complaints to past days for weeks (a complaint can be
+    published long after the day it was received), and it sometimes removes
+    complaints. The API load only looks back 7 days, so on its own it misses
+    both. The bulk file is a full fresh copy of the database every day, so
+    merging it catches every late complaint on every day in under a minute.
+
+Removed complaints
+    The bulk file is a complete snapshot, so a complaint we hold that is not
+    in it has been removed by CFPB. We delete those rows, but only for days at
+    least REMOVAL_SAFETY_DAYS older than the newest day in the file. The newest
+    days belong to the API load, which may hold complaints published after the
+    bulk file was made. If more than MAX_REMOVAL_SHARE of the table would be
+    deleted, we stop: that looks like a broken file, not real removals.
 
 The "as of" time
     Each row remembers how fresh its data is (source_as_of_utc). For the bulk
@@ -26,11 +42,12 @@ How to run it (from the project folder, with the venv active)
     python src/ingestion/load_bulk.py
 Re-running it is safe: rows already up to date are refreshed in place, never
 duplicated.
+    python src/ingestion/load_bulk.py --keep-missing     merge only, delete nothing
 """
 
 import argparse
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -45,6 +62,8 @@ from warehouse import (
 )
 
 DEFAULT_ZIP = Path("data/raw/complaints.csv.zip")
+REMOVAL_SAFETY_DAYS = 7
+MAX_REMOVAL_SHARE = 0.005
 CSV_NAME = "complaints.csv"
 
 COLUMN_MAP = {
@@ -147,10 +166,36 @@ def profile_stage(con):
     ))
 
 
+def remove_missing(con, max_date, log):
+    """Delete complaints that are no longer in the bulk file (see "Removed complaints" above)."""
+    cutoff = max_date - timedelta(days=REMOVAL_SAFETY_DAYS)
+    candidates = """
+        FROM raw.complaints AS t
+        WHERE t.date_received <= $cutoff
+          AND NOT EXISTS (SELECT 1 FROM bulk_stage AS s WHERE s.complaint_id = t.complaint_id)
+    """
+    to_remove = con.execute(f"SELECT count(*) {candidates}", {"cutoff": cutoff}).fetchone()[0]
+    table_rows = con.execute("SELECT count(*) FROM raw.complaints").fetchone()[0]
+    if to_remove > MAX_REMOVAL_SHARE * table_rows:
+        raise ValueError(
+            f"{to_remove:,} complaints are missing from the bulk file, more than "
+            f"{MAX_REMOVAL_SHARE:.1%} of the table. Stopping: the file may be incomplete."
+        )
+    if to_remove:
+        con.execute(
+            f"DELETE FROM raw.complaints WHERE complaint_id IN (SELECT t.complaint_id {candidates})",
+            {"cutoff": cutoff},
+        )
+    log.info("Removed %s complaints that CFPB took out (days up to %s)", f"{to_remove:,}", cutoff)
+    return to_remove
+
+
 def main():
     parser = argparse.ArgumentParser(description="Backfill raw.complaints from the CFPB bulk CSV.")
     parser.add_argument("--zip", type=Path, default=DEFAULT_ZIP, help="path to complaints.csv.zip")
     parser.add_argument("--keep-csv", action="store_true", help="don't delete the unzipped CSV afterwards")
+    parser.add_argument("--keep-missing", action="store_true",
+                        help="don't delete complaints that are missing from the bulk file")
     args = parser.parse_args()
 
     log = setup_logging()
@@ -190,6 +235,7 @@ def main():
     log.info("Merging into raw.complaints...")
     con.execute("BEGIN TRANSACTION")
     counts = merge_complaints(con, "bulk_stage", "bulk", as_of_utc, run_id)
+    removed = 0 if args.keep_missing else remove_missing(con, profile["max_date"], log)
     table_rows = con.execute("SELECT count(*) FROM raw.complaints").fetchone()[0]
     write_load_log(con, {
         "run_id": run_id,
@@ -203,7 +249,8 @@ def main():
         "rows_changed": counts["changed"],
         "rows_skipped_older": counts["skipped_older"],
         "table_rows_after": table_rows,
-        "notes": f"{duplicates} duplicate IDs in file; dates {profile['min_date']} to {profile['max_date']}",
+        "notes": (f"{duplicates} duplicate IDs in file; dates {profile['min_date']} to {profile['max_date']}; "
+                  f"{removed} removed"),
     })
     con.execute("COMMIT")
     con.execute("DROP TABLE staging.bulk_typed")
@@ -211,9 +258,10 @@ def main():
     con.close()
 
     log.info(
-        "Done: %s inserted, %s updated (%s actually changed), %s skipped as older. Table now has %s rows.",
+        "Done: %s inserted, %s updated (%s actually changed), %s skipped as older, %s removed. "
+        "Table now has %s rows.",
         f"{counts['inserted']:,}", f"{counts['updated']:,}", f"{counts['changed']:,}",
-        f"{counts['skipped_older']:,}", f"{table_rows:,}",
+        f"{counts['skipped_older']:,}", f"{removed:,}", f"{table_rows:,}",
     )
 
     if not args.keep_csv:

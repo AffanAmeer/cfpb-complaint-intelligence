@@ -156,7 +156,7 @@ def relief_credit_card(db_path):
     gap = first["monetary_relief"] / first["closed"] - second["monetary_relief"] / second["closed"]
     se = np.sqrt(sum(r["monetary_relief"] / r["closed"] * (1 - r["monetary_relief"] / r["closed"]) / r["closed"]
                      for r in (first, second)))
-    test = (f"{RELIEF_PAIR[0]} vs {RELIEF_PAIR[1]}, credit card: gap {100 * gap:+.2f} points "
+    test = (f"{RELIEF_PAIR[0]} vs {RELIEF_PAIR[1]}, {RELIEF_PRODUCT}: gap {100 * gap:+.2f} points "
             f"(95% CI {100 * (gap - 1.96 * se):+.2f} to {100 * (gap + 1.96 * se):+.2f}), "
             f"z = {z:.1f}, p = {p:.2g}")
     return out, test

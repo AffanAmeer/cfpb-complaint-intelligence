@@ -1,0 +1,102 @@
+level,series,first_week,last_week,weeks_flagged,peak_week,peak_complaints,peak_baseline,peak_ratio,peak_z,excess_complaints,peak_stl_z,stl_confirmed,top_driver,driver_share_of_peak_excess
+overall,All non-bureau companies,2017-01-16,2017-01-23,2,2017-01-16,5711,2974,1.92,10.3,4278,13.3,True,"Navient Solutions, LLC.",0.92
+overall,All non-bureau companies,2023-01-16,2023-01-16,1,2023-01-16,8478,4970,1.71,8.5,3508,11.5,True,WELLS FARGO & COMPANY,0.89
+overall,All non-bureau companies,2025-01-13,2025-01-27,3,2025-01-13,60432,9960,6.07,50.3,76533,41.0,True,"Block, Inc.",0.43
+overall,All credit bureaus,2015-07-06,2015-07-06,1,2015-07-06,1024,582,1.76,7.9,442,1.5,False,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",0.46
+overall,All credit bureaus,2017-04-24,2017-04-24,1,2017-04-24,1598,923,1.73,5.9,675,2.5,False,Experian Information Solutions Inc.,0.35
+overall,All credit bureaus,2017-09-04,2017-09-11,2,2017-09-04,6771,1484,4.56,28.2,7516,25.1,True,"EQUIFAX, INC.",0.99
+overall,All credit bureaus,2022-01-03,2022-01-03,1,2022-01-03,8225,4691,1.75,4.2,3534,1.2,False,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",0.56
+overall,All credit bureaus,2022-04-18,2022-04-25,2,2022-04-18,13917,8688,1.6,9.6,10326,6.5,True,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",0.35
+product,Checking/savings,2016-09-19,2016-09-19,1,2016-09-19,654,434,1.51,7.6,220,6.7,True,WELLS FARGO & COMPANY,0.5
+product,Checking/savings,2018-04-02,2018-04-02,1,2018-04-02,644,406,1.59,7.3,238,8.0,True,"BANK OF AMERICA, NATIONAL ASSOCIATION",0.2
+product,Checking/savings,2023-01-16,2023-01-30,3,2023-01-16,2870,752,3.82,38.1,3390,20.0,True,WELLS FARGO & COMPANY,0.97
+product,Checking/savings,2024-11-11,2024-11-11,1,2024-11-11,1672,1030,1.62,9.2,642,7.0,True,NAVY FEDERAL CREDIT UNION,0.94
+product,Checking/savings,2025-01-13,2025-01-27,3,2025-01-13,10942,1098,9.96,108.0,13456,33.3,True,NAVY FEDERAL CREDIT UNION,0.48
+product,Credit card,2018-04-02,2018-04-02,1,2018-04-02,707,463,1.53,11.3,244,7.2,True,JPMORGAN CHASE & CO.,0.23
+product,Credit card,2025-01-13,2025-01-13,1,2025-01-13,1690,1078,1.57,9.6,612,1.8,False,CAPITAL ONE FINANCIAL CORPORATION,0.26
+product,Credit reporting,2017-01-16,2017-01-30,3,2017-01-23,165,24,6.88,23.8,377,3.6,True,JPMORGAN CHASE & CO.,0.11
+product,Credit reporting,2017-04-24,2017-05-08,3,2017-04-24,385,140,2.75,9.4,617,9.2,True,WELLS FARGO & COMPANY,0.07
+product,Credit reporting,2023-03-06,2023-03-13,2,2023-03-06,2178,1396,1.56,9.6,1559,4.0,True,CAPITAL ONE FINANCIAL CORPORATION,0.12
+product,Credit reporting,2025-01-13,2025-02-03,4,2025-01-20,5694,3220,1.77,7.8,9367,3.8,True,"CBC Companies, Inc.",0.29
+product,Debt collection,2024-02-19,2024-02-19,1,2024-02-19,2012,1219,1.65,4.9,793,1.7,False,CL Holdings LLC,0.3
+product,Debt or credit mgmt,2024-12-23,2024-12-30,2,2024-12-23,219,35,6.26,14.6,320,10.1,True,"John C. Heath, Attorney at Law, PLLC",0.99
+product,Money transfer,2017-12-11,2018-01-08,5,2018-01-08,419,103,4.07,5.1,833,18.4,True,"Coinbase, Inc.",0.95
+product,Money transfer,2020-04-27,2020-04-27,1,2020-04-27,211,102,2.06,9.1,108,4.7,True,PNC Bank N.A.,0.68
+product,Money transfer,2025-01-13,2025-02-10,5,2025-01-13,36311,358,101.43,713.2,51620,36.5,True,"Block, Inc.",0.6
+product,Money transfer,2025-10-06,2025-10-06,1,2025-10-06,2031,640,3.17,35.4,1390,0.1,False,"Early Warning Services, LLC",0.59
+product,Mortgage,2015-08-24,2015-08-24,1,2015-08-24,1360,848,1.6,6.7,512,11.1,True,WELLS FARGO & COMPANY,0.2
+product,Mortgage,2018-04-02,2018-04-02,1,2018-04-02,840,517,1.62,5.5,323,9.9,True,WELLS FARGO & COMPANY,0.24
+product,Mortgage,2023-01-16,2023-01-30,3,2023-01-16,1002,387,2.59,13.0,1199,15.1,True,WELLS FARGO & COMPANY,0.92
+product,Mortgage,2023-11-27,2023-11-27,1,2023-11-27,616,384,1.6,9.5,232,10.0,True,"LoanCare, LLC",0.56
+product,Payday/personal loan,2024-03-18,2024-03-25,2,2024-03-18,295,152,1.95,6.5,254,8.0,True,OneMain Finance Corporation,0.72
+product,Prepaid card,2015-10-19,2015-10-26,2,2015-10-19,366,22,17.02,66.4,524,23.5,True,"Empowerment Ventures, LLC",1.02
+product,Prepaid card,2020-04-13,2020-04-20,2,2020-04-20,206,45,4.58,9.9,268,7.3,True,U.S. BANCORP,0.4
+product,Student loan,2016-03-07,2016-03-14,2,2016-03-14,188,80,2.34,6.3,208,1.3,False,"Navient Solutions, LLC.",0.44
+product,Student loan,2017-01-16,2017-02-13,5,2017-01-16,2922,138,21.1,101.5,5346,20.2,True,"Navient Solutions, LLC.",0.91
+product,Student loan,2022-08-29,2022-09-12,3,2022-09-12,306,108,2.83,9.2,496,8.3,True,EdFinancial Services,0.58
+product,Student loan,2023-08-28,2023-09-04,2,2023-09-04,306,130,2.34,4.3,313,7.3,True,EdFinancial Services,0.26
+product,Student loan,2023-09-25,2023-09-25,1,2023-09-25,403,162,2.48,4.4,240,2.1,False,MOHELA,0.43
+product,Student loan,2024-09-09,2024-09-30,4,2024-09-16,457,200,2.29,7.4,862,3.7,True,"Navient Solutions, LLC.",0.59
+product,Student loan,2025-01-20,2025-01-20,1,2025-01-20,745,264,2.82,6.4,481,4.1,True,"Nelnet, Inc.",0.32
+product,Student loan,2025-03-10,2025-03-10,1,2025-03-10,1765,390,4.53,13.7,1375,10.9,True,"Nelnet, Inc.",0.38
+product,Student loan,2025-12-29,2026-01-05,2,2026-01-05,553,294,1.88,7.8,409,0.2,False,MOHELA,0.29
+product,Vehicle loan/lease,2023-01-16,2023-01-30,3,2023-01-16,542,194,2.79,12.7,710,10.9,True,WELLS FARGO & COMPANY,0.91
+product,Vehicle loan/lease,2023-08-07,2023-08-07,1,2023-08-07,323,209,1.55,5.0,114,5.1,True,"Westlake Services, LLC",0.83
+product,Vehicle loan/lease,2025-01-13,2025-01-13,1,2025-01-13,468,276,1.69,4.0,192,1.8,False,CREDIT ACCEPTANCE CORPORATION,0.12
+company,CAPITAL ONE FINANCIAL CORPORATION,2025-01-13,2025-01-27,3,2025-01-13,5048,408,12.37,78.2,5625,33.4,True,Checking/savings,0.91
+company,"Block, Inc.",2025-01-13,2025-02-17,6,2025-01-13,21933,76,288.59,1474.2,34191,28.8,True,Money transfer,0.99
+company,LEXISNEXIS,2025-01-27,2025-02-03,2,2025-02-03,466,238,1.95,5.6,397,2.7,False,Credit reporting,1.0
+company,"CBC Companies, Inc.",2024-11-18,2024-11-25,2,2024-11-25,298,147,2.03,6.0,256,0.1,False,Credit reporting,0.99
+company,"CBC Companies, Inc.",2025-01-13,2025-02-03,4,2025-01-20,990,266,3.71,9.2,2634,1.9,False,Credit reporting,1.0
+company,"CBC Companies, Inc.",2026-01-19,2026-02-16,5,2026-02-16,1978,644,3.07,4.4,5508,1.5,False,Credit reporting,1.0
+company,JPMORGAN CHASE & CO.,2015-08-24,2015-08-24,1,2015-08-24,276,158,1.75,8.4,118,9.9,True,Mortgage,0.57
+company,JPMORGAN CHASE & CO.,2018-04-02,2018-04-02,1,2018-04-02,325,182,1.79,8.1,144,12.1,True,Credit card,0.39
+company,JPMORGAN CHASE & CO.,2025-01-13,2025-01-20,2,2025-01-13,982,370,2.66,31.9,816,13.3,True,Money transfer,0.5
+company,Resurgent Capital Services L.P.,2024-09-23,2024-10-07,2,2024-09-23,409,254,1.61,5.0,301,4.4,True,Debt collection,1.0
+company,Resurgent Capital Services L.P.,2025-01-20,2025-01-20,1,2025-01-20,649,406,1.6,5.8,242,4.5,True,Debt collection,0.56
+company,CL Holdings LLC,2024-02-12,2024-03-11,5,2024-02-19,350,50,7.0,36.8,878,6.2,True,Debt collection,0.79
+company,CL Holdings LLC,2026-02-02,2026-02-02,1,2026-02-02,807,402,2.01,5.2,405,0.6,False,Debt collection,0.74
+company,"BANK OF AMERICA, NATIONAL ASSOCIATION",2015-08-24,2015-08-24,1,2015-08-24,322,197,1.63,5.3,125,9.7,True,Mortgage,0.5
+company,"BANK OF AMERICA, NATIONAL ASSOCIATION",2023-07-10,2023-07-17,2,2023-07-10,722,244,2.97,29.3,617,14.5,True,Checking/savings,0.6
+company,"BANK OF AMERICA, NATIONAL ASSOCIATION",2025-01-13,2025-01-13,1,2025-01-13,647,282,2.29,10.3,365,9.5,True,Money transfer,0.5
+company,WELLS FARGO & COMPANY,2015-08-24,2015-08-24,1,2015-08-24,329,192,1.71,8.4,136,7.4,True,Mortgage,0.77
+company,WELLS FARGO & COMPANY,2016-09-05,2016-10-03,5,2016-09-26,451,190,2.38,8.2,1002,9.4,True,Checking/savings,0.46
+company,WELLS FARGO & COMPANY,2018-04-02,2018-04-02,1,2018-04-02,310,180,1.72,9.7,130,6.1,True,Mortgage,0.59
+company,WELLS FARGO & COMPANY,2022-12-19,2022-12-19,1,2022-12-19,588,198,2.97,27.7,390,11.7,True,Checking/savings,0.39
+company,WELLS FARGO & COMPANY,2023-01-16,2023-02-06,4,2023-01-16,3325,211,15.76,110.5,5590,30.6,True,Checking/savings,0.66
+company,WELLS FARGO & COMPANY,2025-01-13,2025-01-13,1,2025-01-13,648,318,2.03,16.5,330,6.0,True,Money transfer,0.53
+company,ENCORE CAPITAL GROUP INC.,2025-01-20,2025-01-27,2,2025-01-27,432,251,1.72,5.8,332,4.5,True,Debt collection,0.71
+company,"Portfolio Recovery Associates, LLC",2023-04-17,2023-04-17,1,2023-04-17,183,70,2.6,7.6,112,7.9,True,Debt collection,0.88
+company,"Portfolio Recovery Associates, LLC",2025-01-20,2025-01-20,1,2025-01-20,369,222,1.66,4.0,146,4.3,True,Debt collection,0.64
+company,"Early Warning Services, LLC",2025-01-13,2025-02-10,5,2025-01-13,13737,88,155.22,736.5,17595,32.1,True,Money transfer,0.99
+company,"Early Warning Services, LLC",2025-10-06,2025-10-06,1,2025-10-06,915,108,8.43,64.0,806,11.1,True,Money transfer,1.01
+company,NAVY FEDERAL CREDIT UNION,2024-11-04,2024-11-11,2,2024-11-11,765,134,5.71,54.5,815,12.6,True,Checking/savings,0.95
+company,NAVY FEDERAL CREDIT UNION,2025-01-13,2025-02-03,4,2025-01-13,5083,199,25.54,173.4,7720,24.8,True,Checking/savings,0.97
+company,AMERICAN EXPRESS COMPANY,2018-10-15,2018-10-15,1,2018-10-15,150,48,3.09,14.6,102,10.8,True,Prepaid card,0.57
+company,MOHELA,2023-09-25,2023-09-25,1,2023-09-25,156,50,3.15,6.0,106,2.2,False,Student loan,0.97
+company,MOHELA,2024-12-02,2024-12-02,1,2024-12-02,316,122,2.58,5.1,194,1.8,False,Student loan,0.95
+company,MOHELA,2025-03-10,2025-03-10,1,2025-03-10,618,201,3.07,8.2,417,4.3,True,Student loan,0.8
+company,"Bread Financial Holdings, Inc.",2022-06-27,2022-07-04,2,2022-06-27,426,80,5.32,22.2,446,13.1,True,Credit card,1.04
+company,"Bread Financial Holdings, Inc.",2025-12-08,2025-12-08,1,2025-12-08,320,202,1.59,6.1,118,1.2,False,Debt collection,0.69
+company,Chime Financial Inc,2025-10-06,2025-10-06,1,2025-10-06,799,160,4.99,50.5,639,20.3,True,Money transfer,0.89
+company,"Paypal Holdings, Inc",2021-03-01,2021-03-01,1,2021-03-01,178,60,2.97,6.4,118,8.5,True,Money transfer,1.01
+company,"Paypal Holdings, Inc",2025-12-29,2025-12-29,1,2025-12-29,308,176,1.75,5.8,132,6.3,True,Money transfer,0.82
+company,"Nelnet, Inc.",2023-10-02,2023-10-02,1,2023-10-02,184,60,3.09,7.0,124,6.6,True,Student loan,1.05
+company,"Nelnet, Inc.",2025-01-20,2025-01-20,1,2025-01-20,225,50,4.46,8.1,174,3.8,True,Student loan,0.88
+company,"Nelnet, Inc.",2025-02-10,2025-02-10,1,2025-02-10,272,68,4.03,8.1,204,4.7,True,Student loan,0.57
+company,"Nelnet, Inc.",2025-03-10,2025-03-10,1,2025-03-10,795,114,6.94,10.6,680,9.3,True,Student loan,0.77
+company,"EQUIFAX, INC.",2015-07-06,2015-07-06,1,2015-07-06,359,223,1.61,5.7,136,0.5,False,Credit reporting,1.0
+company,"EQUIFAX, INC.",2017-09-04,2017-09-18,3,2017-09-04,5723,510,11.23,90.2,7348,37.9,True,Credit reporting,0.99
+company,"EQUIFAX, INC.",2021-04-05,2021-04-12,2,2021-04-05,3193,1998,1.6,4.7,2238,4.5,True,Credit reporting,0.99
+company,"EQUIFAX, INC.",2022-04-18,2022-04-25,2,2022-04-18,4663,2941,1.59,7.7,3422,4.0,True,Credit reporting,0.99
+company,"EQUIFAX, INC.",2025-01-20,2025-01-20,1,2025-01-20,30694,19352,1.59,5.1,11342,5.5,True,Credit reporting,0.97
+company,Experian Information Solutions Inc.,2017-04-24,2017-04-24,1,2017-04-24,538,302,1.78,6.4,236,2.3,False,Credit reporting,0.97
+company,Experian Information Solutions Inc.,2021-12-13,2022-01-17,6,2022-01-03,2345,754,3.11,13.9,7858,5.8,True,Credit reporting,0.99
+company,Experian Information Solutions Inc.,2022-04-18,2022-04-25,2,2022-04-18,4547,2792,1.63,15.7,3440,6.5,True,Credit reporting,1.0
+company,Experian Information Solutions Inc.,2025-01-13,2025-01-13,1,2025-01-13,29982,19132,1.57,5.9,10850,5.8,True,Credit reporting,0.96
+company,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2015-07-06,2015-07-06,1,2015-07-06,370,166,2.24,7.5,204,-0.1,False,Credit reporting,1.0
+company,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2016-03-14,2016-03-14,1,2016-03-14,284,184,1.54,7.4,100,1.0,False,Credit reporting,0.99
+company,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2016-07-04,2016-07-04,1,2016-07-04,476,252,1.89,12.1,224,2.0,False,Credit reporting,1.0
+company,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2017-04-24,2017-04-24,1,2017-04-24,522,308,1.69,7.4,214,3.6,True,Credit reporting,0.95
+company,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2021-11-29,2022-01-03,6,2022-01-03,2964,974,3.04,7.3,8731,1.1,False,Credit reporting,0.99
+company,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2022-04-18,2022-04-25,2,2022-04-18,4707,2890,1.63,9.3,3498,4.4,True,Credit reporting,0.99

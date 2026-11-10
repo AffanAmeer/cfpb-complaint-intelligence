@@ -8,7 +8,7 @@ The project collects, processes, and analyses millions of consumer banking compl
 
 Rather than treating the dataset as a one-time analysis, I built a pipeline that continuously updates the data, validates it against the original source, and makes it available for downstream analytics.
 
-**Status:** In progress. Data ingestion, warehouse modelling, automated validation, daily scheduling, and SQL-based KPI analysis are implemented. Statistical anomaly detection, NLP classification, and dashboard development are next.
+**Status:** In progress. Data ingestion, warehouse modelling, automated validation, daily scheduling, SQL-based KPI analysis, and statistical spike detection are implemented. NLP classification and dashboard development are next.
 
 ## Project Highlights
 
@@ -22,6 +22,8 @@ Rather than treating the dataset as a one-time analysis, I built a pipeline that
 | **Daily** | Automated pipeline refresh |
 | **~7 sec** | Full dbt build on a MacBook Air |
 | **~2 sec** | Execution time for all 7 KPI queries |
+| **41** | Weekly series scanned for complaint spikes |
+| **101** | Spike episodes detected (2014 to 2026) |
 
 <sub>Dataset and warehouse figures reflect the November 9, 2026 snapshot. The warehouse grows every day as CFPB publishes new complaints, so older sections that describe a specific run give that run's numbers and date. Processing times are measured on my local machine and may vary by hardware.</sub>
 
@@ -53,7 +55,8 @@ flowchart LR
 - **SQL:** Data exploration, KPI calculations, and analytical queries.
 - **dbt Core:** Data modelling, documentation, and automated testing.
 - **GitHub Actions:** Scheduled pipeline execution and warehouse persistence.
-- **scikit-learn:** Planned statistical and NLP modelling.
+- **statsmodels & SciPy:** Seasonal decomposition (STL), confidence intervals, and significance tests.
+- **scikit-learn:** Planned NLP modelling.
 - **Power BI:** Planned interactive dashboards and reporting.
 
 ## 1. Data Ingestion & Validation
@@ -320,7 +323,52 @@ These figures should be interpreted carefully because companies have different p
 
 *These results are descriptive, not causal. Complaints come from people who chose to file one, so they do not represent all customers.*
 
-## 6. Running the Project
+## 6. Spike Detection & Significance Testing
+
+The KPIs describe a year. A bank also needs to know, week by week, when a product or company suddenly gets far more complaints than usual, and whether the jump is real or noise.
+
+Full methods and results are in [docs/spike_detection.md](docs/spike_detection.md). Results are saved to `reports/stats/`.
+
+### Method
+
+I scan 41 weekly series: all non-bureau companies, the bureaus together, each of the 11 product groups, the 25 biggest non-bureau companies, and each bureau. Weeks are used because daily counts swing with the day of the week, and only weeks that are at least 30 days old are tested, because of CFPB's publishing lag.
+
+**Robust rolling z-score (the detector).** Each week is compared with the median of the previous 12 weeks, scaled by their median absolute deviation (MAD). A week is a spike when z is at least 4, the count is at least 1.5 times the baseline, and there are at least 100 extra complaints. The first rule is statistical, the other two make sure the spike matters.
+
+Two choices came from the data rather than the textbook:
+
+- **No Poisson test.** Weekly counts vary far more than a Poisson model allows (variance 26 times the mean for non-bureau complaints). A Poisson test called 211 of 623 weeks significant at p < 0.001.
+- **Median and MAD, not mean and standard deviation.** One huge week inflates a standard deviation for the next 12 weeks and hides the weeks right after it. In January 2025, money transfer complaints were still 28 times normal a week after the peak, and the mean-based score called that week normal (z = 0.7). The median-based score did not (z = 196).
+
+![Why the baseline uses the median](reports/figures/spikes_masking_money_transfer.png)
+
+**Seasonal decomposition (STL) as a second opinion.** Complaints are seasonal (busier in February and March, quieter in December), and a 12-week baseline can't see that. STL removes the yearly pattern and checks whether the spike still stands out. It confirmed 77 of the 101 episodes. It is a second opinion, not a verdict: it can only look back, and its answer moves with its settings.
+
+**Change-point detection was tested and left out.** It mostly redrew the steady growth as a staircase, and the number of "shifts" depended on the penalty setting (7 or 14 on the same series). The sharp changes it found were the spikes the z-score already catches.
+
+### Results
+
+The detector found **101 spike episodes** from 2014 to 2026. There are no official labels for "real" spikes, so I checked it against publicly known events. It flagged each one in the right week with the right company as the driver: the Wells Fargo fake-accounts settlement (September 2016), the CFPB lawsuit against Navient (January 2017), the Equifax data breach (September 2017), and the CFPB order against Wells Fargo (December 2022).
+
+**The January 2025 spike** was the largest: 60,432 non-bureau complaints in the week of January 13, against a baseline of 9,960 (z = 50). Most were online complaints about Cash App (Block) and Zelle (Early Warning Services) filed between January 15 and 19. Only 20 of the 32,236 "Other transaction problem" complaints from those days ended with monetary relief.
+
+![Weekly complaints with spikes marked](reports/figures/spikes_non_bureau_weekly.png)
+
+### Did the spike leave a lasting change?
+
+I compared 12 weeks before the spike with 12 weeks after it ended. Complaints were growing anyway, and spring is busier than late autumn, so each series is compared with a control group the spike did not touch (a difference-in-differences, with 95% confidence intervals).
+
+- **Overall, no.** Non-bureau complaints ended exactly where the control predicted: 1.00 (95% CI 0.89 to 1.12).
+- **Block did not go back to normal.** Its weekly complaints stayed 3.4 times higher than the control predicts (95% CI 2.8 to 4.1).
+- Zelle and Capital One returned to normal.
+
+### Relief rates within one product
+
+Phase 5 showed Bank of America giving monetary relief far more often than Capital One, but the two banks have different product mixes. Within credit cards only, the gap is still 22.5 percentage points (35.4% vs 12.9%; 95% CI for the gap 21.1 to 23.8). So product mix does not explain it. It still does not prove one bank is more generous, because companies may record outcomes differently.
+
+*These results are descriptive. Complaint data shows when people complained, not why.*
+
+## 7. Running the Project
 
 ### Requirements
 
@@ -385,6 +433,20 @@ Each query result is saved as a CSV in `reports/kpis/`. To redraw the charts fro
 python src/analysis/plot_findings.py
 ```
 
+### Run the spike detection
+
+```bash
+python src/stats/run_spike_detection.py
+python src/stats/significance_tests.py
+python src/stats/plot_spikes.py
+```
+
+The results are saved as CSVs in `reports/stats/`. The unit tests for the detection methods need no warehouse:
+
+```bash
+python -m unittest discover tests
+```
+
 Alternatively, download the latest compressed warehouse from the project's [`warehouse` release](https://github.com/AffanAmeer/cfpb-complaint-intelligence/releases/tag/warehouse), extract it with `gunzip`, and place it at:
 
 ```text
@@ -393,7 +455,7 @@ data/warehouse/complaints.duckdb
 
 This allows you to explore the warehouse and run the analytical queries without downloading the entire historical dataset again.
 
-## 7. Roadmap
+## 8. Roadmap
 
 The project is being developed in stages, with the goal of moving from descriptive analytics towards automated detection and classification.
 
@@ -404,7 +466,7 @@ The project is being developed in stages, with the goal of moving from descripti
 - [x] dbt star schema and automated tests
 - [x] Daily GitHub Actions pipeline
 - [x] SQL-based KPI analysis
-- [ ] Statistical anomaly detection and complaint spike identification
+- [x] Statistical anomaly detection and complaint spike identification
 - [ ] NLP-based complaint classification
 - [ ] Interactive Power BI dashboard
 - [ ] Automated monthly analytical brief

@@ -8,7 +8,7 @@ The project collects, processes, and analyses millions of consumer banking compl
 
 Rather than treating the dataset as a one-time analysis, I built a pipeline that continuously updates the data, validates it against the original source, and makes it available for downstream analytics.
 
-**Status:** In progress. Data ingestion, warehouse modelling, automated validation, daily scheduling, SQL-based KPI analysis, and statistical spike detection are implemented. NLP classification and dashboard development are next.
+**Status:** In progress. Data ingestion, warehouse modelling, automated validation, daily scheduling, SQL-based KPI analysis, statistical spike detection, and a complaint text classifier are implemented. Dashboard development is next.
 
 ## Project Highlights
 
@@ -24,6 +24,7 @@ Rather than treating the dataset as a one-time analysis, I built a pipeline that
 | **~2 sec** | Execution time for all 7 KPI queries |
 | **41** | Weekly series scanned for complaint spikes |
 | **101** | Spike episodes detected (2014 to 2026) |
+| **81.7%** | Classifier accuracy on future months it never saw (vs 41.3% for keyword rules) |
 
 <sub>Dataset and warehouse figures reflect the November 9, 2026 snapshot. The warehouse grows every day as CFPB publishes new complaints, so older sections that describe a specific run give that run's numbers and date. Processing times are measured on my local machine and may vary by hardware.</sub>
 
@@ -368,7 +369,33 @@ Phase 5 showed Bank of America giving monetary relief far more often than Capita
 
 *These results are descriptive. Complaint data shows when people complained, not why.*
 
-## 7. Running the Project
+## 7. Complaint Classifier
+
+A bank has to send every complaint to the team that owns the product. Complaints that arrive by email or chat have no product label, so someone has to read each one. This model reads the complaint text and predicts the product group.
+
+Full method and results are in [docs/classifier.md](docs/classifier.md). Results are saved to `reports/classifier/`.
+
+**Data.** The CFPB stopped publishing complaint text in 2026, but the narratives that were already public are kept in its official [Narratives Archive](https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/). I used January 2025 to February 2026: 1,255,993 narratives.
+
+**Method.** TF-IDF (words and two-word phrases) and logistic regression, trained on 2025 and tested on January and February 2026, so the test is on months the model never saw. Form letters are counted once, and test complaints whose exact text appeared in training are removed.
+
+**The product mix shifted.** Credit reporting was 55% of the 2025 narratives but under 2% in 2026, so the model over-predicted it. I re-estimated the new mix from the model's own predictions, without using any test labels (the EM method for label shift), and adjusted the probabilities. It estimated credit reporting at 2.35% (actual 1.85%).
+
+| Model (test: 30,301 complaints) | Accuracy | Macro F1 |
+| --- | ---: | ---: |
+| Keyword rules | 41.3% | 0.457 |
+| TF-IDF + logistic regression | 75.5% | 0.682 |
+| **Adjusted for the new mix** | **81.7%** | **0.724** |
+
+It is strongest on mortgages, student loans and debt collection (F1 0.89 to 0.93). Its biggest confusion is money transfer complaints read as checking/savings, which often fit both.
+
+**Auto-route only the confident ones.** When the model is at least 90% confident, it covers 53% of complaints with 95.9% accuracy, and people read the rest.
+
+![Confidence routing](reports/figures/classifier_confidence_routing.png)
+
+*The labels are the consumer's own choice of product, and only consumers who agreed to publish their story are included.*
+
+## 8. Running the Project
 
 ### Requirements
 
@@ -447,6 +474,31 @@ The results are saved as CSVs in `reports/stats/`. The unit tests for the detect
 python -m unittest discover tests
 ```
 
+### Run the complaint classifier
+
+Download the narratives archive files (January 2025 to February 2026) into `data/raw/narratives/`:
+
+```bash
+mkdir -p data/raw/narratives
+cd data/raw/narratives
+curl -fL -o CCDB_Export_9.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_9_January_2025_through_February_2025.zip
+curl -fL -o CCDB_Export_10.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_10_March_2025_through_April_2025.zip
+curl -fL -o CCDB_Export_11.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_11_May_2025_through_June_2025.zip
+curl -fL -o CCDB_Export_12.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_12_July_2025_through_August_2025.zip
+curl -fL -o CCDB_Export_13.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_13_September_2025_through_October_2025.zip
+curl -fL -o CCDB_Export_14.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_14_November_2025_through_December_2025.zip
+curl -fL -o CCDB_Export_15.zip https://files.consumerfinance.gov/f/documents/CCDB_Export_15_January_2026_through_February_2026.zip
+cd ../../..
+```
+
+Then load, train and draw the charts. Training takes about an hour because it tunes 6 models; add `--skip-tuning` to reuse the saved settings.
+
+```bash
+python src/classifier/load_narratives.py
+python src/classifier/train_classifier.py
+python src/classifier/plot_classifier.py
+```
+
 Alternatively, download the latest compressed warehouse from the project's [`warehouse` release](https://github.com/AffanAmeer/cfpb-complaint-intelligence/releases/tag/warehouse), extract it with `gunzip`, and place it at:
 
 ```text
@@ -455,7 +507,7 @@ data/warehouse/complaints.duckdb
 
 This allows you to explore the warehouse and run the analytical queries without downloading the entire historical dataset again.
 
-## 8. Roadmap
+## 9. Roadmap
 
 The project is being developed in stages, with the goal of moving from descriptive analytics towards automated detection and classification.
 
@@ -467,7 +519,7 @@ The project is being developed in stages, with the goal of moving from descripti
 - [x] Daily GitHub Actions pipeline
 - [x] SQL-based KPI analysis
 - [x] Statistical anomaly detection and complaint spike identification
-- [ ] NLP-based complaint classification
+- [x] NLP-based complaint classification
 - [ ] Interactive Power BI dashboard
 - [ ] Automated monthly analytical brief
 - [ ] Presentation deck and Excel exports
@@ -484,7 +536,7 @@ A few limitations are important:
 
 - Complaints are not a representative sample of all consumers.
 - The number of complaints does not account for company size or customer base.
-- The CFPB stopped publishing consumer complaint narratives in September 2026, so the current data has no complaint text.
+- The CFPB stopped publishing consumer complaint narratives in 2026, so the current data has no complaint text. The classifier uses the CFPB's archive of narratives published before that.
 - Complaint records can be updated or removed after their initial publication.
 - Recent periods may be incomplete due to publication delays.
 

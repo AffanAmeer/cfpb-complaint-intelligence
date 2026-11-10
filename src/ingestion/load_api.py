@@ -12,8 +12,9 @@ Why a lookback window
     weeks. So each run re-pulls the last LOOKBACK_DAYS days, not just the
     newest day, and the upsert overwrites those rows with the fresh values.
     A longer lookback catches more changes but costs more requests (about
-    150 to 350 requests per day of complaints). Older changes are picked up
-    whenever we re-run the bulk backfill.
+    150 to 350 requests per day of complaints). Older changes, and complaints
+    CFPB publishes late for older days, are picked up by the daily bulk merge
+    (load_bulk.py), which runs before this script.
 
 How paging works
     The API gives at most 100 rows per request. We sort newest first and,
@@ -25,6 +26,13 @@ How paging works
 Built-in check
     For every day, the rows we fetched must equal the API's own count for that
     day. If they don't, the day is logged as a warning in raw.load_log.
+
+Removed complaints
+    CFPB sometimes takes a complaint out after publishing it. When a day's
+    fetch is complete (rows fetched = API count), any complaint we hold for
+    that day that the API no longer returns is deleted. Two guards stop a bad
+    response from wiping real data: nothing is deleted if the API says the day
+    is empty, or if more than MAX_REMOVAL_SHARE of the day would go.
 
 How to run it (from the project folder, with the venv active)
     python src/ingestion/load_api.py                 newest day we hold minus 7 days, up to today
@@ -55,6 +63,7 @@ PAGE_SIZE = 100
 MAX_TRIES = 5
 PAUSE_SECONDS = 0.2
 LOOKBACK_DAYS = 7
+MAX_REMOVAL_SHARE = 0.05
 
 API_FIELDS = [
     "complaint_id", "date_received", "date_sent_to_company", "product", "sub_product",
@@ -144,6 +153,27 @@ def stage_records(con, records):
     con.unregister("api_records")
 
 
+def remove_missing(con, day, api_count, log):
+    """Delete complaints for `day` that the API no longer returns. Needs api_stage from this day."""
+    held = con.execute("SELECT count(*) FROM raw.complaints WHERE date_received = ?", [day]).fetchone()[0]
+    candidates = """
+        FROM raw.complaints AS t
+        WHERE t.date_received = $day
+          AND NOT EXISTS (SELECT 1 FROM api_stage AS s WHERE s.complaint_id = t.complaint_id)
+    """
+    to_remove = con.execute(f"SELECT count(*) {candidates}", {"day": day}).fetchone()[0]
+    if to_remove == 0:
+        return 0
+    if api_count == 0 or to_remove > MAX_REMOVAL_SHARE * held:
+        log.warning("%s: %s complaints look removed, too many to trust, so nothing was deleted", day, to_remove)
+        return 0
+    con.execute(
+        f"DELETE FROM raw.complaints WHERE complaint_id IN (SELECT t.complaint_id {candidates})",
+        {"day": day},
+    )
+    return to_remove
+
+
 def pick_days(con, args):
     """Work out which UTC days to load from the command-line options."""
     today = datetime.now(timezone.utc).date()
@@ -178,7 +208,7 @@ def main():
     days = pick_days(con, args)
     log.info("API run %s: loading %s UTC days, %s to %s", run_id, len(days), days[0], days[-1])
 
-    totals = {"fetched": 0, "inserted": 0, "updated": 0, "changed": 0, "skipped_older": 0}
+    totals = {"fetched": 0, "inserted": 0, "updated": 0, "changed": 0, "skipped_older": 0, "removed": 0}
     mismatched_days = []
     for day in days:
         started = utc_now()
@@ -190,10 +220,13 @@ def main():
             log.warning("%s: %s", day, note)
 
         counts = {"inserted": 0, "updated": 0, "changed": 0, "skipped_older": 0}
+        removed = 0
         con.execute("BEGIN TRANSACTION")
         if records:
             stage_records(con, records)
             counts = merge_complaints(con, "api_stage", "api", as_of_utc, run_id)
+            if len(records) == api_count:
+                removed = remove_missing(con, day, api_count, log)
         table_rows = con.execute("SELECT count(*) FROM raw.complaints").fetchone()[0]
         write_load_log(con, {
             "run_id": f"{run_id}-{day.isoformat()}",
@@ -207,25 +240,27 @@ def main():
             "rows_changed": counts["changed"],
             "rows_skipped_older": counts["skipped_older"],
             "table_rows_after": table_rows,
-            "notes": f"day {day.isoformat()}: {note}",
+            "notes": f"day {day.isoformat()}: {note}; {removed} removed",
         })
         con.execute("COMMIT")
 
         totals["fetched"] += len(records)
         for key in counts:
             totals[key] += counts[key]
+        totals["removed"] += removed
         log.info(
-            "%s: %s fetched (API says %s) | %s new, %s refreshed, %s changed, %s skipped",
+            "%s: %s fetched (API says %s) | %s new, %s refreshed, %s changed, %s skipped, %s removed",
             day, f"{len(records):,}", f"{api_count:,}", f"{counts['inserted']:,}",
-            f"{counts['updated']:,}", f"{counts['changed']:,}", f"{counts['skipped_older']:,}",
+            f"{counts['updated']:,}", f"{counts['changed']:,}", f"{counts['skipped_older']:,}", f"{removed:,}",
         )
 
     con.execute("CHECKPOINT")
     con.close()
     log.info(
-        "Done: %s fetched, %s new, %s refreshed (%s changed), %s skipped. Days with a count mismatch: %s",
+        "Done: %s fetched, %s new, %s refreshed (%s changed), %s skipped, %s removed. "
+        "Days with a count mismatch: %s",
         f"{totals['fetched']:,}", f"{totals['inserted']:,}", f"{totals['updated']:,}",
-        f"{totals['changed']:,}", f"{totals['skipped_older']:,}",
+        f"{totals['changed']:,}", f"{totals['skipped_older']:,}", f"{totals['removed']:,}",
         [d.isoformat() for d in mismatched_days] or "none",
     )
 

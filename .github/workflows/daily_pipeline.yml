@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "37 18 * * *"
   workflow_dispatch:
+    inputs:
+      save_warehouse:
+        description: "Save the warehouse to the release at the end (untick for a test run)"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -53,8 +58,7 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Rebuild from the bulk file (only when nothing was saved)
-        if: steps.download.outputs.found == 'false'
+      - name: Merge the latest bulk file (catches late and removed complaints)
         run: |
           mkdir -p data/raw
           curl -L --fail -o data/raw/complaints.csv.zip https://files.consumerfinance.gov/ccdb/complaints.csv.zip
@@ -75,6 +79,7 @@ jobs:
           dbt source freshness
 
       - name: Save the warehouse
+        if: github.event_name == 'schedule' || inputs.save_warehouse
         run: |
           gzip -1 -c data/warehouse/complaints.duckdb > "$WAREHOUSE_FILE"
           ls -lh "$WAREHOUSE_FILE"

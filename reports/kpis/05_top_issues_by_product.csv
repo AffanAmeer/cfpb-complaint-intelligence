@@ -1,0 +1,34 @@
+product_group,issue_rank,issue,complaints,share_of_product_pct,bureau_share_pct
+Credit reporting or other personal consumer reports,1,Incorrect information on your report,3792679,59.7,96.4
+Credit reporting or other personal consumer reports,2,Improper use of your report,1302196,20.5,95.9
+Credit reporting or other personal consumer reports,3,Problem with a company's investigation into an existing problem,1205851,19.0,96.7
+Debt collection,1,Attempts to collect debt not owed,140627,43.3,12.4
+Debt collection,2,Took or threatened to take negative or legal action,79878,24.6,1.4
+Debt collection,3,Written notification about debt,52309,16.1,21.5
+Credit card,1,Problem with a purchase shown on your statement,30903,32.1,0.2
+Credit card,2,Getting a credit card,10951,11.4,24.9
+Credit card,3,"Other features, terms, or problems",10873,11.3,0.5
+Checking or savings account,1,Managing an account,51627,58.0,0.1
+Checking or savings account,2,Problem with a lender or other company charging your account,12719,14.3,0.1
+Checking or savings account,3,Closing an account,11746,13.2,0.0
+"Money transfer, virtual currency, or money service",1,Fraud or scam,11411,28.8,0.1
+"Money transfer, virtual currency, or money service",2,Other transaction problem,7441,18.8,0.0
+"Money transfer, virtual currency, or money service",3,Unauthorized transactions or other transaction problem,6877,17.4,0.0
+Mortgage,1,Trouble during payment process,16301,48.6,0.1
+Mortgage,2,Struggling to pay mortgage,9382,28.0,0.0
+Mortgage,3,Applying for a mortgage or refinancing an existing mortgage,3302,9.8,0.2
+Vehicle loan or lease,1,Managing the loan or lease,7524,29.6,0.2
+Vehicle loan or lease,2,Repossession,6799,26.7,2.7
+Vehicle loan or lease,3,Problems at the end of the loan or lease,3879,15.2,0.2
+Student loan,1,Dealing with your lender or servicer,11475,57.1,0.2
+Student loan,2,Struggling to repay your loan,3705,18.4,0.7
+Student loan,3,Incorrect information on your report,3028,15.1,4.4
+"Payday loan, title loan, personal loan, or advance loan",1,Charged fees or interest you didn't expect,4349,23.3,0.2
+"Payday loan, title loan, personal loan, or advance loan",2,Problem when making payments,3071,16.4,0.2
+"Payday loan, title loan, personal loan, or advance loan",3,Struggling to pay your loan,1930,10.3,0.3
+Prepaid card,1,Problem with a purchase or transfer,2305,35.9,0.1
+Prepaid card,2,Trouble using the card,2150,33.5,0.5
+Prepaid card,3,Problem getting a card or closing an account,1092,17.0,0.6
+Debt or credit management,1,Confusing or missing disclosures,1163,26.5,52.8
+Debt or credit management,2,Didn't provide services promised,1081,24.6,6.5
+Debt or credit management,3,Charged upfront or unexpected fees,641,14.6,6.7

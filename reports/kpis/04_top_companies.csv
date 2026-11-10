@@ -1,0 +1,19 @@
+segment,rank_current,rank_prior,company_name,complaints_current,complaints_prior,yoy_pct,share_of_segment_pct,timely_pct_of_closed,relief_pct_of_closed
+Credit bureau,1,2,"TRANSUNION INTERMEDIATE HOLDINGS, INC.",2232513,1404444,59.0,36.31,100.0,0.0
+Credit bureau,2,1,"EQUIFAX, INC.",2015976,1439312,40.1,32.79,100.0,0.0
+Credit bureau,3,3,Experian Information Solutions Inc.,1899793,1257348,51.1,30.9,100.0,0.01
+Other company,1,11,LEXISNEXIS,34987,16208,115.9,4.06,99.22,0.01
+Other company,2,2,CAPITAL ONE FINANCIAL CORPORATION,34790,31913,9.0,4.04,100.0,5.68
+Other company,3,14,CL Holdings LLC,28763,13460,113.7,3.34,100.0,0.0
+Other company,4,5,JPMORGAN CHASE & CO.,27110,22905,18.4,3.15,100.0,7.63
+Other company,5,6,Resurgent Capital Services L.P.,24963,21855,14.2,2.9,100.0,0.0
+Other company,6,3,"CBC Companies, Inc.",24656,26664,-7.5,2.86,100.0,0.0
+Other company,7,10,"BANK OF AMERICA, NATIONAL ASSOCIATION",24485,17442,40.4,2.84,99.32,24.81
+Other company,8,7,"CITIBANK, N.A.",24338,18154,34.1,2.82,100.0,19.77
+Other company,9,12,ENCORE CAPITAL GROUP INC.,23763,15118,57.2,2.76,100.0,0.02
+Other company,10,8,WELLS FARGO & COMPANY,23321,17944,30.0,2.71,99.99,8.63
+Other company,11,13,"Portfolio Recovery Associates, LLC",21826,13946,56.5,2.53,99.74,0.0
+Other company,12,15,SYNCHRONY FINANCIAL,16769,12357,35.7,1.95,95.92,8.88
+Other company,13,1,"Block, Inc.",15995,45360,-64.7,1.86,99.03,0.15
+Other company,14,23,Chime Financial Inc,12893,5776,123.2,1.5,99.99,5.59
+Other company,15,22,"Paypal Holdings, Inc",12493,6136,103.6,1.45,99.99,19.32

@@ -6,7 +6,7 @@ A data analytics project that uses the CFPB's public Consumer Complaint Database
 
 The goal is to build an end-to-end pipeline that takes raw complaint data and turns it into useful insights through data engineering, SQL analysis, statistical methods, and NLP.
 
-**Status:** In progress. The full complaint history (18,965,764 complaints, Dec 2011 to Nov 2026) is loaded into DuckDB, reconciles exactly with the CFPB API, and is modelled into a tested star schema with dbt. GitHub Actions refreshes it every day.
+**Status:** In progress. The full complaint history (19,028,339 complaints, Dec 2011 to Nov 2026, as of 2026-11-09) is loaded into DuckDB, reconciles exactly with the CFPB API, and is modelled into a tested star schema with dbt. GitHub Actions refreshes it every day, and a set of SQL queries turns it into KPIs.
 
 ## Architecture
 
@@ -53,6 +53,15 @@ CFPB API → Python data ingestion → DuckDB → dbt data models and tests → 
    dbt build
    dbt source freshness
    ```
+
+6. Run the KPI queries (from the project folder). Each result is saved as a CSV in `reports/kpis/`:
+
+   ```bash
+   cd ..
+   python src/analysis/run_kpis.py
+   ```
+
+   To skip steps 4 and 5, download the latest warehouse from the [`warehouse` release](https://github.com/AffanAmeer/cfpb-complaint-intelligence/releases/tag/warehouse), unzip it with `gunzip`, and put it at `data/warehouse/complaints.duckdb`.
 
 ## Ingestion
 
@@ -107,9 +116,39 @@ Decisions worth knowing:
 
 First run (2026-11-07, rebuilding from the bulk file): 23m 48s in total. The API load took 16m 20s, reconciliation 4m 22s, the bulk rebuild 55s and `dbt build` 52s. All 5 reconciliation checks passed, and all 18,965,764 complaints reached `fact_complaints`.
 
+## Analysis
+
+The KPIs are plain SQL files in `sql/analysis/`, run by `src/analysis/run_kpis.py` against the warehouse (read-only). All 7 queries take about 2 seconds on 19 million rows. Every KPI is defined in [docs/kpi_definitions.md](docs/kpi_definitions.md), and the results are written up in [docs/analysis_findings.md](docs/analysis_findings.md).
+
+| Query | What it answers |
+| --- | --- |
+| `_window.sql` | Sets the reporting window: the last 12 complete months and the 12 before them. |
+| `00_data_maturity.sql` | Why the newest weeks are left out (they are still being published). |
+| `01_headline_kpis.sql` | The scorecard: complaints, bureau share, timely and relief rates, this year vs last. |
+| `02_monthly_trend.sql` | Every month since 2011, with month-over-month, year-over-year and a 3-month rolling average. |
+| `03_product_yoy.sql` | Complaints by product group, year over year. |
+| `04_top_companies.sql` | The top companies, ranked separately for the credit bureaus and everyone else. |
+| `05_top_issues_by_product.sql` | The top 3 issues inside each product. |
+| `06_company_response_scorecard.sql` | Timely and relief rates for companies with at least 1,000 complaints. |
+
+Decisions worth knowing:
+
+- **Only complete months.** CFPB publishes most complaints after the company answers, so the newest weeks are always short. In the data as of 2026-11-09, non-bureau complaints in the week of 2026-10-26 were at 46% of a normal week. A month counts only once it ended 30 days before the newest complaint, and the window moves forward by itself.
+- **Credit bureaus are reported separately.** Equifax, TransUnion and Experian are about 88% of recent complaints and would hide any change at banks.
+- **Rates use closed complaints only.** "In progress" complaints are always marked timely and can't have relief yet.
+- **Changes in rates are in percentage points**, changes in counts are in percent.
+- **Counts are not quality scores.** CFPB doesn't publish customer numbers, so a big company ranks high by being big.
+- **No company response time.** The data says whether an answer was on time, not when it came, so there is no "days to respond" KPI.
+
 ## Key Findings
 
-Added once results exist. Every number here will be reproducible from this repo.
+Data as of 2026-11-09. Current 12 months = Oct 2025 to Sep 2026, compared with the 12 months before. Every number comes from the CSVs in `reports/kpis/` (a snapshot; a later run will differ slightly). Details in [docs/analysis_findings.md](docs/analysis_findings.md).
+
+- Complaints rose 46.0% (4,800,962 to 7,010,093), but most of that is the three credit bureaus (+49.9%). Complaints about all other companies rose 23.1% (699,858 to 861,811).
+- That growth is slowing: non-bureau complaints were up 68.8% year over year in Dec 2025 and 11.5% in Sep 2026.
+- Debt collection is now the biggest non-bureau product (292,812 complaints, 34.0% of the segment, +61.6%). Its top issue is "Attempts to collect debt not owed" (43.3%).
+- 99.55% of closed complaints were answered on time, so the timely rate barely separates companies. It works as an exception report: MOHELA answered 27.76% of 8,551 closed complaints on time.
+- Monetary relief at non-bureau companies rose from 3.58% to 3.92% of closed complaints. Relief rates differ a lot between big banks (Bank of America 24.81%, Capital One 5.68%), but their product mixes differ too, so that is not a fair comparison on its own.
 
 ## Data Source and Limitations
 
@@ -124,7 +163,7 @@ Added once results exist. Every number here will be reproducible from this repo.
 - [x] 2. Ingestion + incremental loads
 - [x] 3. dbt star schema + tests
 - [x] 4. GitHub Actions scheduling
-- [ ] 5. SQL analysis + KPIs
+- [x] 5. SQL analysis + KPIs
 - [ ] 6. Statistics: spike detection
 - [ ] 7. Text classifier
 - [ ] 8. Power BI dashboard

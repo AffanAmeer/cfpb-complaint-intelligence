@@ -292,11 +292,15 @@ Excluding those companies, complaints increased by 23.1%, from 699,858 to 861,81
 
 The growth rate in non-bureau complaints also slowed considerably, falling from 68.8% year-over-year in December 2025 to 11.5% in September 2026.
 
+![Monthly complaints about non-bureau companies, January 2023 to September 2026](reports/figures/non_bureau_monthly_trend.png)
+
 ### Debt collection has become the largest non-bureau product
 
 Debt collection accounts for 292,812 complaints, representing 34.0% of all non-bureau complaints.
 
 Its most common issue is "Attempts to collect debt not owed," accounting for 43.3% of debt collection complaints.
+
+![Non-bureau complaints by product, last 12 complete months vs the 12 before](reports/figures/non_bureau_products_yoy.png)
 
 ### Timely response rates provide limited differentiation
 
@@ -375,7 +379,11 @@ cd ..
 python src/analysis/run_kpis.py
 ```
 
-Each query result is saved as a CSV in `reports/kpis/`.
+Each query result is saved as a CSV in `reports/kpis/`. To redraw the charts from those CSVs:
+
+```bash
+python src/analysis/plot_findings.py
+```
 
 Alternatively, download the latest compressed warehouse from the project's [`warehouse` release](https://github.com/AffanAmeer/cfpb-complaint-intelligence/releases/tag/warehouse), extract it with `gunzip`, and place it at:
 

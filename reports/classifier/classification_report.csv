@@ -1,0 +1,15 @@
+product_group,precision,recall,f1-score,support
+Checking/savings,0.7445,0.8578,0.7971,5751.0
+Credit card,0.8025,0.8483,0.8248,5696.0
+Credit reporting,0.523,0.5472,0.5348,561.0
+Debt collection,0.8711,0.9074,0.8889,8657.0
+Debt or credit mgmt,0.8352,0.2413,0.3744,315.0
+Money transfer,0.7957,0.556,0.6546,2725.0
+Mortgage,0.9267,0.9311,0.9289,2106.0
+Payday/personal loan,0.68,0.5947,0.6345,1204.0
+Prepaid card,0.732,0.4797,0.5796,467.0
+Student loan,0.9614,0.866,0.9112,1149.0
+Vehicle loan/lease,0.8725,0.8072,0.8386,1670.0
+accuracy,0.8172,0.8172,0.8172,0.8172
+macro avg,0.795,0.6942,0.7243,30301.0
+weighted avg,0.8182,0.8172,0.8124,30301.0

@@ -1,0 +1,133 @@
+product_group,rank,term,weight
+Checking/savings,1,bank,11.517
+Checking/savings,2,chime,10.026
+Checking/savings,3,funds,9.576
+Checking/savings,4,chase,9.42
+Checking/savings,5,cd,9.278
+Checking/savings,6,deposit,8.812
+Checking/savings,7,capital,8.683
+Checking/savings,8,overdraft,8.564
+Checking/savings,9,banking,8.275
+Checking/savings,10,savings,8.09
+Checking/savings,11,usaa,7.854
+Checking/savings,12,checking,7.537
+Credit card,1,card,16.203
+Credit card,2,capital,12.937
+Credit card,3,credit card,12.627
+Credit card,4,synchrony,12.347
+Credit card,5,citi,11.835
+Credit card,6,barclays,10.899
+Credit card,7,discover,9.458
+Credit card,8,balance transfer,9.048
+Credit card,9,comenity,8.943
+Credit card,10,chase,8.681
+Credit card,11,citibank,8.263
+Credit card,12,american express,7.97
+Credit reporting,1,experian,19.089
+Credit reporting,2,equifax,17.283
+Credit reporting,3,transunion,15.831
+Credit reporting,4,credit report,12.537
+Credit reporting,5,inquiries,12.195
+Credit reporting,6,credit card,10.863
+Credit reporting,7,reporting,10.682
+Credit reporting,8,accounts,9.255
+Credit reporting,9,lexisnexis,9.172
+Credit reporting,10,inquiry,7.589
+Credit reporting,11,student loan,7.047
+Credit reporting,12,reported,6.988
+Debt collection,1,debt,17.6
+Debt collection,2,collection,12.691
+Debt collection,3,credit card,10.537
+Debt collection,4,collections,9.397
+Debt collection,5,credit report,8.08
+Debt collection,6,auto loan,7.332
+Debt collection,7,collect,7.24
+Debt collection,8,owe,6.763
+Debt collection,9,block eliminate,6.533
+Debt collection,10,owed,6.505
+Debt collection,11,lvnv,6.494
+Debt collection,12,collector,5.886
+Debt or credit mgmt,1,experian,10.589
+Debt or credit mgmt,2,debt,8.947
+Debt or credit mgmt,3,creditors,7.031
+Debt or credit mgmt,4,debt relief,6.422
+Debt or credit mgmt,5,promised,6.225
+Debt or credit mgmt,6,kikoff,6.017
+Debt or credit mgmt,7,mortgage,5.656
+Debt or credit mgmt,8,services,5.625
+Debt or credit mgmt,9,repair,5.452
+Debt or credit mgmt,10,debts,5.417
+Debt or credit mgmt,11,settlement,5.177
+Debt or credit mgmt,12,lexington,5.143
+Money transfer,1,zelle,14.811
+Money transfer,2,paypal,11.37
+Money transfer,3,cashapp,10.876
+Money transfer,4,coinbase,10.683
+Money transfer,5,money,9.124
+Money transfer,6,transfer,8.828
+Money transfer,7,funds,8.358
+Money transfer,8,transactions,8.098
+Money transfer,9,transaction,8.084
+Money transfer,10,wire,7.533
+Money transfer,11,robinhood,7.43
+Money transfer,12,venmo,7.4
+Mortgage,1,mortgage,24.85
+Mortgage,2,escrow,13.922
+Mortgage,3,heloc,13.397
+Mortgage,4,appraisal,10.463
+Mortgage,5,loan,9.896
+Mortgage,6,foreclosure,9.716
+Mortgage,7,home,9.475
+Mortgage,8,newrez,9.274
+Mortgage,9,pmi,9.235
+Mortgage,10,modification,8.946
+Mortgage,11,closing,7.818
+Mortgage,12,pennymac,7.788
+Payday/personal loan,1,loan,17.354
+Payday/personal loan,2,affirm,11.244
+Payday/personal loan,3,klarna,8.161
+Payday/personal loan,4,line credit,7.726
+Payday/personal loan,5,earnin,7.449
+Payday/personal loan,6,advance,7.363
+Payday/personal loan,7,acima,7.329
+Payday/personal loan,8,loans,7.168
+Payday/personal loan,9,personal loan,6.707
+Payday/personal loan,10,titlemax,6.676
+Payday/personal loan,11,lending,6.412
+Payday/personal loan,12,zip,6.246
+Prepaid card,1,card,18.592
+Prepaid card,2,prepaid,11.065
+Prepaid card,3,netspend,9.15
+Prepaid card,4,funds,7.472
+Prepaid card,5,unemployment,7.455
+Prepaid card,6,gift,7.356
+Prepaid card,7,wisely,6.481
+Prepaid card,8,benefits,6.403
+Prepaid card,9,comerica,6.403
+Prepaid card,10,cards,6.279
+Prepaid card,11,money,6.19
+Prepaid card,12,cashapp,6.169
+Student loan,1,mohela,18.866
+Student loan,2,student,11.978
+Student loan,3,nelnet,11.614
+Student loan,4,loans,11.253
+Student loan,5,aidvantage,10.831
+Student loan,6,loan,10.678
+Student loan,7,school,10.187
+Student loan,8,edfinancial,10.111
+Student loan,9,navient,9.206
+Student loan,10,forbearance,8.815
+Student loan,11,education,6.725
+Student loan,12,firstmark,6.683
+Vehicle loan/lease,1,vehicle,15.726
+Vehicle loan/lease,2,car,12.993
+Vehicle loan/lease,3,repossession,11.557
+Vehicle loan/lease,4,bridgecrest,9.61
+Vehicle loan/lease,5,loan,9.118
+Vehicle loan/lease,6,ally,9.047
+Vehicle loan/lease,7,exeter,8.722
+Vehicle loan/lease,8,auto,8.29
+Vehicle loan/lease,9,auto loan,8.267
+Vehicle loan/lease,10,lease,8.228
+Vehicle loan/lease,11,acceptance,8.091
+Vehicle loan/lease,12,carvana,7.677

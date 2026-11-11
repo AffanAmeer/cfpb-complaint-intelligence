@@ -1,0 +1,12 @@
+actual \ predicted,Checking/savings,Credit card,Credit reporting,Debt collection,Debt or credit mgmt,Money transfer,Mortgage,Payday/personal loan,Prepaid card,Student loan,Vehicle loan/lease
+Checking/savings,4933,374,7,63,0,290,14,29,31,0,10
+Credit card,347,4832,65,309,1,37,6,67,23,0,9
+Credit reporting,10,39,307,183,0,0,4,3,0,6,9
+Debt collection,83,270,150,7855,10,10,45,106,1,25,102
+Debt or credit mgmt,29,45,14,116,76,6,12,13,0,3,1
+Money transfer,953,166,0,22,0,1515,16,21,26,1,5
+Mortgage,28,28,7,45,1,2,1961,28,0,0,6
+Payday/personal loan,65,151,9,168,2,10,26,716,1,5,51
+Prepaid card,142,64,0,3,0,32,0,2,224,0,0
+Student loan,9,15,19,83,1,2,11,10,0,995,4
+Vehicle loan/lease,27,37,9,170,0,0,21,58,0,0,1348

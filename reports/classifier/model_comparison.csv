@@ -1,0 +1,5 @@
+model,accuracy,macro_f1,weighted_f1
+Always the most common group,0.0185,0.0033,0.0007
+Keyword rules,0.4131,0.4568,0.4715
+TF-IDF + logistic regression,0.7553,0.6815,0.7844
+"TF-IDF + logistic regression, adjusted for new mix",0.8172,0.7243,0.8124

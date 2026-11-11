@@ -1,0 +1,12 @@
+product_group,train_share,estimated_test_share,actual_test_share
+Checking/savings,0.0856,0.2048,0.1898
+Credit card,0.0712,0.1995,0.188
+Credit reporting,0.5489,0.0235,0.0185
+Debt collection,0.1347,0.2804,0.2857
+Debt or credit mgmt,0.0047,0.0079,0.0104
+Money transfer,0.0674,0.0655,0.0899
+Mortgage,0.0256,0.0719,0.0695
+Payday/personal loan,0.0142,0.0413,0.0397
+Prepaid card,0.007,0.016,0.0154
+Student loan,0.0194,0.0356,0.0379
+Vehicle loan/lease,0.0212,0.0536,0.0551

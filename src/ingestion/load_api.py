@@ -34,10 +34,21 @@ Removed complaints
     response from wiping real data: nothing is deleted if the API says the day
     is empty, or if more than MAX_REMOVAL_SHARE of the day would go.
 
+When the API is slow or down
+    The daily bulk merge (load_bulk.py) runs first, so the warehouse is
+    already up to date to the bulk file's date before this script starts.
+    The API reload is a top-up, not the only source. So if the API stops
+    answering (a day still fails after all retries) or gets so slow that the
+    run would pass MAX_MINUTES, this script stops cleanly instead of crashing:
+    days already loaded are kept, the day it was on is dropped (nothing from
+    it is merged or deleted), the skipped days are written to raw.load_log,
+    and the run carries on to reconcile, dbt and saving the warehouse.
+
 How to run it (from the project folder, with the venv active)
     python src/ingestion/load_api.py                 newest day we hold minus 7 days, up to today
     python src/ingestion/load_api.py --days 1        only the newest day we hold (a quick test)
     python src/ingestion/load_api.py --start 2026-11-01 --end 2026-11-03
+    python src/ingestion/load_api.py --max-minutes 10    give up on the API after 10 minutes
 All dates are UTC days.
 """
 
@@ -64,6 +75,11 @@ MAX_TRIES = 5
 PAUSE_SECONDS = 0.2
 LOOKBACK_DAYS = 7
 MAX_REMOVAL_SHARE = 0.05
+MAX_MINUTES = 45
+
+
+class ApiGaveUp(Exception):
+    """The API failed after every retry, or the time budget ran out."""
 
 API_FIELDS = [
     "complaint_id", "date_received", "date_sent_to_company", "product", "sub_product",
@@ -87,8 +103,12 @@ def get_with_retries(params, log):
             time.sleep(wait)
 
 
-def fetch_day(day, log):
-    """Fetch every complaint received on one UTC day. Returns (records, api_count, as_of_utc)."""
+def fetch_day(day, log, deadline=None):
+    """Fetch every complaint received on one UTC day. Returns (records, api_count, as_of_utc).
+
+    deadline is a time.monotonic() value. If it passes before the day is done,
+    ApiGaveUp is raised and the half-fetched day is thrown away.
+    """
     base = {
         "date_received_min": day.isoformat(),
         "date_received_max": day.isoformat(),
@@ -104,7 +124,12 @@ def fetch_day(day, log):
         params = dict(base)
         if cursor:
             params["search_after"] = cursor
-        data = get_with_retries(params, log)
+        if deadline is not None and time.monotonic() > deadline:
+            raise ApiGaveUp(f"time budget used up after {len(records):,} rows of {day}")
+        try:
+            data = get_with_retries(params, log)
+        except requests.RequestException as error:
+            raise ApiGaveUp(f"no answer for {day} after {MAX_TRIES} tries ({error})") from error
         if api_count is None:
             api_count = data["hits"]["total"]["value"]
             last_indexed = datetime.fromisoformat(data["_meta"]["last_indexed"])
@@ -200,6 +225,8 @@ def main():
     parser.add_argument("--start", help="first UTC day to load, YYYY-MM-DD")
     parser.add_argument("--end", help="last UTC day to load, YYYY-MM-DD (default: today)")
     parser.add_argument("--days", type=int, help="load this many days ending at the newest day we hold")
+    parser.add_argument("--max-minutes", type=float, default=MAX_MINUTES,
+                        help=f"stop asking the API after this many minutes (default {MAX_MINUTES})")
     args = parser.parse_args()
 
     log = setup_logging()
@@ -208,11 +235,36 @@ def main():
     days = pick_days(con, args)
     log.info("API run %s: loading %s UTC days, %s to %s", run_id, len(days), days[0], days[-1])
 
+    deadline = time.monotonic() + args.max_minutes * 60
     totals = {"fetched": 0, "inserted": 0, "updated": 0, "changed": 0, "skipped_older": 0, "removed": 0}
     mismatched_days = []
-    for day in days:
+    skipped_days = []
+    for position, day in enumerate(days):
         started = utc_now()
-        records, api_count, as_of_utc = fetch_day(day, log)
+        try:
+            records, api_count, as_of_utc = fetch_day(day, log, deadline)
+        except ApiGaveUp as reason:
+            skipped_days = days[position:]
+            log.warning(
+                "Stopping the API load: %s. Skipped %s day(s), %s to %s. "
+                "They still have the data from today's bulk merge.",
+                reason, len(skipped_days), skipped_days[0], skipped_days[-1],
+            )
+            write_load_log(con, {
+                "run_id": f"{run_id}-stopped",
+                "source": "api",
+                "started_at_utc": started,
+                "finished_at_utc": utc_now(),
+                "source_as_of_utc": None,
+                "rows_in_source": 0,
+                "rows_inserted": 0,
+                "rows_updated": 0,
+                "rows_changed": 0,
+                "rows_skipped_older": 0,
+                "table_rows_after": con.execute("SELECT count(*) FROM raw.complaints").fetchone()[0],
+                "notes": f"API load stopped, skipped {skipped_days[0]} to {skipped_days[-1]}: {reason}"[:500],
+            })
+            break
         note = "ok"
         if len(records) != api_count:
             note = f"fetched {len(records)} but API count is {api_count}"
@@ -258,10 +310,11 @@ def main():
     con.close()
     log.info(
         "Done: %s fetched, %s new, %s refreshed (%s changed), %s skipped, %s removed. "
-        "Days with a count mismatch: %s",
+        "Days with a count mismatch: %s. Days skipped because the API gave up: %s",
         f"{totals['fetched']:,}", f"{totals['inserted']:,}", f"{totals['updated']:,}",
         f"{totals['changed']:,}", f"{totals['skipped_older']:,}", f"{totals['removed']:,}",
         [d.isoformat() for d in mismatched_days] or "none",
+        [d.isoformat() for d in skipped_days] or "none",
     )
 
 

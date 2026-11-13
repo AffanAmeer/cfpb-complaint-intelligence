@@ -65,11 +65,13 @@ jobs:
           python src/ingestion/load_bulk.py
 
       - name: Load recent complaints from the API
-        run: python src/ingestion/load_api.py
+        timeout-minutes: 60
+        run: python src/ingestion/load_api.py --max-minutes 45
 
       - name: Reconcile with the API
         id: reconcile
         continue-on-error: true
+        timeout-minutes: 25
         run: python src/ingestion/reconcile.py
 
       - name: Build and test the star schema
@@ -109,5 +111,5 @@ jobs:
       - name: Fail the run if reconciliation failed
         if: steps.reconcile.outcome == 'failure'
         run: |
-          echo "Reconciliation found differences with the CFPB API. The data was still saved. See the run summary."
+          echo "Reconciliation found differences with the CFPB API, or could not finish because the API was too slow. The data was still saved. See the run summary."
           exit 1

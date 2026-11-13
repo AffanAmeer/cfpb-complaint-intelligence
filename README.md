@@ -197,7 +197,7 @@ The entire pipeline runs automatically through GitHub Actions.
 
 The workflow:
 
-1. Checks that the CFPB API and bulk dataset are reachable.
+1. Checks that the CFPB bulk dataset is reachable (the API is checked too, but only a warning if it is down).
 2. Downloads the previously saved warehouse.
 3. Merges the latest bulk dataset.
 4. Retrieves recent changes through the API.

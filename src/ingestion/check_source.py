@@ -12,9 +12,15 @@ What it checks
     1. The search API answers, and how many complaints it holds.
     2. The bulk CSV zip is downloadable (a HEAD request: headers only, no download).
 
+Only the bulk file is required. The bulk merge brings the warehouse up to
+date on its own, and the API is just a top-up (load_api.py stops cleanly if
+the API is down). So if only the API fails, this prints a warning and the
+run carries on. The API being down then shows up later, in reconcile.
+
 How to run it (from the project folder, with the venv active)
     python src/ingestion/check_source.py
-It exits with code 1 if either check fails, which turns a GitHub Actions step red.
+It exits with code 1 if the bulk file can't be reached, which turns a GitHub
+Actions step red.
 """
 
 import sys
@@ -57,10 +63,13 @@ def main():
         except requests.RequestException as error:
             print(f"{name}: request failed: {error}")
             results[name] = False
-    if not all(results.values()):
-        failed = [name for name, ok in results.items() if not ok]
-        print(f"FAILED: CFPB not reachable from this machine ({', '.join(failed)}).")
+    if not results["bulk"]:
+        print("FAILED: the CFPB bulk file is not reachable from this machine.")
         sys.exit(1)
+    if not results["api"]:
+        print("::warning::CFPB API not reachable. Carrying on with the bulk file; "
+              "the API top-up and reconcile will likely be skipped or fail.")
+        return
     print("OK: CFPB API and bulk file are both reachable.")
 
 

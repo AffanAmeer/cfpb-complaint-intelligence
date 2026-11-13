@@ -220,6 +220,7 @@ The pipeline also handles a missing warehouse by rebuilding the historical datas
 - GitHub's temporary workflow token is used for release permissions, avoiding a separately managed personal access token.
 - Reconciliation failures preserve the newly ingested warehouse before marking the workflow as failed.
 - Failed dbt builds do not publish an updated warehouse.
+- If the CFPB API is down or very slow, the API step stops after 45 minutes (or once a day fails every retry), keeps the days it finished, and lets the run continue. The bulk merge has already brought the warehouse up to date, so the API reload is a top-up rather than the only source. This came from a real failure on Nov 12, 2026, when the API took 90 minutes to return a single day and then stopped answering, and the run crashed just short of the 2-hour job limit.
 
 ### First full run
 
